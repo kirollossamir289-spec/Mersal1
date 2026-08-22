@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MERSAL | Servant Platform</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{
+  --bg:#f5f7f6;--card:#fff;--text:#17231f;--muted:#71807a;--primary:#236b55;
+  --primary2:#2f8a6d;--gold:#d6a64f;--line:#e5ebe8;--danger:#b54c4c;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:#173b31;color:#fff;padding:22px 16px;position:fixed;right:0;top:0;bottom:0;z-index:10}
+.logo{font-size:26px;font-weight:800;padding:8px 10px 25px}.logo span{color:#e5bc68}
+.nav button{width:100%;border:0;background:transparent;color:#dce9e4;padding:13px 14px;border-radius:12px;text-align:right;margin:3px 0}
+.nav button:hover,.nav button.active{background:#285b4c;color:#fff}.nav i{display:inline-block;width:28px;font-style:normal}
+.main{margin-right:260px;width:calc(100% - 260px);padding:28px;max-width:1500px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.welcome h1{margin:0 0 5px;font-size:28px}.muted{color:var(--muted)}
+.avatar{width:46px;height:46px;border-radius:50%;background:#dfeee8;color:#236b55;display:grid;place-items:center;font-weight:800}
+.grid{display:grid;gap:18px}.stats{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1.25fr .75fr}.three{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 5px 20px #173b3108}
+.card h2,.card h3{margin-top:0}
+.stat{display:flex;justify-content:space-between;align-items:center}.stat strong{font-size:29px}
+.icon{width:45px;height:45px;border-radius:13px;background:#eaf4ef;display:grid;place-items:center;font-size:21px}
+.progress{height:10px;background:#edf1ef;border-radius:20px;overflow:hidden}.progress>div{height:100%;background:var(--primary2);border-radius:20px}
+.btn{border:0;border-radius:11px;padding:10px 15px;background:var(--primary);color:#fff;font-weight:700}
+.btn.secondary{background:#eaf4ef;color:var(--primary)}.btn.gold{background:#f5e8c9;color:#765719}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
+.search{display:flex;gap:10px}
+.search input,.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);background:#fbfcfb;border-radius:11px;padding:11px 13px;outline:none}
+.search input{flex:1}
+.lesson{border:1px solid var(--line);border-radius:14px;padding:15px;margin:10px 0}
+.lesson .tag{font-size:12px;color:var(--primary);background:#eaf4ef;border-radius:20px;padding:4px 8px}
+.verse{background:#f8f1df;border-right:4px solid var(--gold);padding:15px;border-radius:12px;line-height:1.9;margin:10px 0}
+.section{display:none}.section.active{display:block}.hide{display:none}
+.bible-controls{display:grid;grid-template-columns:1.15fr 1.5fr .7fr;gap:12px}
+.bible-chapter{background:#f8f1df;border-radius:16px;padding:18px 20px;line-height:2.15;margin-top:14px;border:1px solid #eadfca}.bible-verse{background:transparent;border:0;padding:5px 2px;margin:0;line-height:2.15;cursor:pointer;transition:background .15s,box-shadow .15s}.bible-verse.selected{background:#fff8e8;box-shadow:0 0 0 2px #e5bc6844;border-radius:10px}.bible-verse.en{direction:ltr;text-align:left;border:0}.bible-verse .num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#eaf4ef;color:var(--primary);font-weight:800;margin-left:7px}.bible-verse.en .num{margin-left:0;margin-right:7px}.bible-actionbar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:none;gap:8px;background:#173b31;color:#fff;padding:8px;border-radius:14px;box-shadow:0 12px 35px #173b3140;z-index:40}.bible-actionbar.show{display:flex}.bible-actionbar button{border:0;border-radius:10px;padding:9px 14px;background:#fff;color:#173b31;font-weight:800}.bible-settings{margin-top:18px}
+.bible-verse.en{direction:ltr;text-align:left;border-right:0;border-left:4px solid var(--gold)}
+.bible-verse .num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#eaf4ef;color:var(--primary);font-weight:800;margin-left:7px}
+.bible-verse.en .num{margin-left:0;margin-right:7px}
+.bible-source{font-size:12px;margin-top:8px}
+.bible-error{padding:16px;background:#fff3f3;border:1px solid #f0d5d5;border-radius:12px;color:var(--danger)}
+@media(max-width:700px){.bible-controls{grid-template-columns:1fr}}
+.tabs{display:flex;gap:8px;margin-bottom:15px;overflow:auto}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 13px;white-space:nowrap}
+.tabs button.active{background:#173b31;color:#fff}
+.timeline{display:flex;align-items:flex-end;gap:7px;height:180px;border-bottom:1px solid var(--line);padding:15px 8px 0}
+.bar{flex:1;background:#7db9a3;border-radius:7px 7px 0 0;min-width:16px;position:relative}
+.bar span{position:absolute;bottom:-24px;width:100%;text-align:center;font-size:11px;color:var(--muted)}
+.person{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+.person:last-child{border-bottom:0}.mini{width:38px;height:38px;border-radius:50%;background:#edf4f1;display:grid;place-items:center;color:var(--primary);font-weight:700}
+.modal{position:fixed;inset:0;background:#10251e99;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modal.show{display:flex}.modalbox{background:#fff;border-radius:20px;width:min(680px,100%);padding:24px;max-height:90vh;overflow:auto}
+.toast{position:fixed;left:24px;bottom:24px;background:#173b31;color:#fff;padding:12px 17px;border-radius:12px;display:none;z-index:50}
+.toast.show{display:block}
+.account-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+.profile-head{display:flex;align-items:center;gap:15px;margin-bottom:20px}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:#dfeee8;color:var(--primary);display:grid;place-items:center;font-size:28px;font-weight:800}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-box{background:#fbfcfb;border:1px solid var(--line);border-radius:13px;padding:13px}
+.info-box .label{font-size:12px;color:var(--muted);margin-bottom:5px}
+.account-type{display:inline-block;background:#eaf4ef;color:var(--primary);padding:6px 11px;border-radius:20px;font-weight:700;font-size:13px}
+.qr-card{text-align:center}
+.qr-wrap{display:flex;justify-content:center;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;margin:15px auto;width:min(270px,100%);min-height:270px}
+#qrcode img,#qrcode canvas{margin:auto;display:block}
+.qr-id{font-family:monospace;background:#f5f7f6;border:1px solid var(--line);border-radius:9px;padding:8px;word-break:break-all;font-size:12px}
+.qr-note{background:#f8f1df;border-right:4px solid var(--gold);padding:12px;border-radius:11px;text-align:right;line-height:1.7;margin-top:15px}
+@media(max-width:900px){
+  .sidebar{width:76px;padding:15px 8px}.logo{font-size:0;text-align:center}.logo span{font-size:22px}
+  .nav button{font-size:0;text-align:center}.nav i{font-size:20px;width:auto}
+  .main{margin-right:76px;width:calc(100% - 76px);padding:18px}.stats,.three,.two{grid-template-columns:1fr 1fr}
+  .account-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .stats,.three,.two{grid-template-columns:1fr}.topbar{align-items:flex-start}.welcome h1{font-size:22px}.main{padding:12px}
+  .info-grid{grid-template-columns:1fr}
+}
+.auth-screen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
+.auth-screen.show{display:flex}.auth-box{width:min(480px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 15px 50px #173b3114}
+.auth-logo{text-align:center;font-size:30px;font-weight:800;color:#173b31;margin-bottom:6px}.auth-logo span{color:#e5bc68}.auth-tabs{display:flex;gap:8px;margin:20px 0}.auth-tabs button{flex:1;border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px;font-weight:700}.auth-tabs button.active{background:#173b31;color:#fff}.auth-form{display:none}.auth-form.active{display:block}.auth-error{display:none;background:#fff3f3;color:var(--danger);border:1px solid #f0d5d5;padding:11px;border-radius:11px;margin:12px 0;line-height:1.6}.auth-success{display:none;background:#eef8f2;color:var(--primary);border:1px solid #d7ebdf;padding:11px;border-radius:11px;margin:12px 0;line-height:1.6}.auth-help{font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px}
+.logout-btn{background:#fff1f1!important;color:#9b4040!important}
+@media(max-width:600px){.auth-box{padding:20px}}
+
+/* MERSAL v2 additions */
+.spiritual-checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+.spiritual-item{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:15px;background:#fbfcfb}
+.spiritual-item input{width:20px;height:20px;accent-color:var(--primary);cursor:pointer}
+.spiritual-item small{display:block;color:var(--muted);margin-top:3px}
+.post{margin-bottom:16px}.post-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.post-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.comment-box{display:flex;gap:8px;margin-top:12px}.comment-box input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px}.comment{padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+#qr-reader{border:1px solid var(--line);border-radius:15px;overflow:hidden}
+@media(max-width:600px){.spiritual-checklist{grid-template-columns:1fr}}
+
+
+/* English UI */
+/* Dynamic Arabic UI */
+body.app-ar{direction:rtl}
+body.app-ar .sidebar{left:auto;right:0}
+body.app-ar .main{margin-left:0;margin-right:240px}
+body.app-ar .qr-note{text-align:right;border-left:0;border-right:4px solid var(--gold)}
+body.app-ar .comment-box{direction:rtl}
+@media(max-width:900px){
+  body.app-ar .main{margin-left:0;margin-right:76px}
+}
+
+body{direction:ltr}
+.sidebar{left:0;right:auto}
+.main{margin-left:240px;margin-right:0}
+.qr-note{text-align:left;border-right:0;border-left:4px solid var(--gold)}
+.comment-box{direction:ltr}
+.scanner-file-row{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.scanner-file-row input{max-width:280px}
+#qr-reader video{max-width:100%}
+@media(max-width:900px){
+  .main{margin-left:76px;margin-right:0}
+}
+
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.calendar-head{font-size:12px;color:var(--muted);text-align:center;font-weight:700;padding:8px}.calendar-day{min-height:100px;border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff;cursor:pointer}.calendar-day.muted-day{opacity:.45}.calendar-day.today{outline:2px solid var(--gold)}.calendar-date{font-weight:800}.calendar-event{margin-top:6px;padding:5px 7px;border-radius:8px;background:#eef6f2;color:var(--primary);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event small{display:block;color:var(--muted)}
+@media(max-width:700px){.calendar-grid{gap:4px}.calendar-day{min-height:78px;padding:5px}.calendar-event{font-size:10px}}
+</style>
+</head>
+
+<body>
+<div class="auth-screen" id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">مِرْسَال <span>✦</span></div>
+    <div class="muted" style="text-align:center">منصة الخادم — سجّل دخولك للوصول إلى حسابك</div>
+    <div class="auth-tabs">
+      <button id="loginTab" class="active" onclick="switchAuth('login')">تسجيل الدخول</button>
+      <button id="signupTab" onclick="switchAuth('signup')">إنشاء حساب</button>
+    </div>
+    <div id="authError" class="auth-error"></div>
+    <div id="authSuccess" class="auth-success"></div>
+    <form id="loginForm" class="auth-form active" onsubmit="login(event)">
+      <div class="field"><label>البريد الإلكتروني</label><input id="loginEmail" type="email" autocomplete="email" required placeholder="name@example.com"></div><br>
+      <div class="field"><label>كلمة المرور</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••"></div><br>
+      <div class="field"><label>نوع الحساب</label><select id="loginRole"><option value="leader">قائد</option><option value="scout">كشاف</option></select></div><br>
+      <button class="btn" style="width:100%" type="submit">دخول</button>
+    </form>
+    <form id="signupForm" class="auth-form" onsubmit="signup(event)">
+      <div class="field"><label>الاسم</label><input id="signupName" required placeholder="اسمك بالكامل"></div><br>
+      <div class="field"><label>البريد الإلكتروني</label><input id="signupEmail" type="email" autocomplete="email" required placeholder="name@example.com"></div><br>
+      <div class="field"><label>كلمة المرور</label><input id="signupPassword" type="password" minlength="6" autocomplete="new-password" required placeholder="6 أحرف أو أكثر"></div><br>
+      <div class="field"><label>أنا</label><select id="signupRole" required><option value="leader">قائد</option><option value="scout">كشاف</option></select></div><br>
+      <div class="field"><label>المرحلة العمرية</label><select id="signupAge"><option>ابتدائي</option><option>إعدادي</option><option>ثانوي</option><option>شباب</option></select></div><br>
+      <button class="btn" style="width:100%" type="submit">إنشاء الحساب</button>
+    </form>
+    <div class="auth-help">يتم حفظ بيانات الحساب في Supabase. لا تضع داخل هذا الملف أي مفتاح Secret أو service_role.</div>
+  </div>
+</div>
+
+<div class="app" id="appShell">
+<aside class="sidebar">
+  <div class="logo">مِرْسَال <span>✦</span></div>
+  <div class="nav">
+    <button class="active" onclick="show('dashboard',this)"><i>⌂</i> الرئيسية</button>
+    <button onclick="show('prep',this)"><i>✎</i> مستر التحضير</button>
+    <button onclick="show('bible',this)"><i>✝</i> الكتاب المقدس</button>
+    <button onclick="show('spiritual',this)"><i>♡</i> حياتي الروحية</button>
+    <button onclick="show('calendar',this)"><i>▣</i> التقويم</button>
+    <button onclick="show('network',this)"><i>◎</i> شبكة الخدام</button>
+    <button id="navStudents" onclick="show('students',this)"><i>♙</i> المخدومين</button>
+    <button id="navAttendance" onclick="show('attendance',this)"><i>📷</i> الحضور والـQR</button>
+    <button onclick="show('account',this)"><i>👤</i> حسابي</button>
+  </div>
+</aside>
+<main class="main">
+
+<section id="dashboard" class="section active">
+  <div class="topbar">
+    <div class="welcome"><h1 id="dashboardWelcome">صباح الخير يا خادم 👋</h1><div class="muted">خلّي كلمتك جاهزة… وخلّي قلبك جاهز أكتر.</div></div>
+    <div class="avatar" id="topAvatar">م</div>
+  </div>
+  <div class="grid stats">
+    <div class="card stat"><div><div class="muted">تحضيراتك</div><strong id="prepCount">0</strong></div><div class="icon">✎</div></div>
+    <div class="card stat"><div><div class="muted">Streak</div><strong id="dashboardStreak">0 🔥</strong></div><div class="icon">🔥</div></div>
+    <div class="card stat"><div><div class="muted">آيات محفوظة</div><strong id="savedNoteCount">0</strong></div><div class="icon">✝</div></div>
+    <div class="card stat"><div><div class="muted">مخدومين</div><strong id="dashboardStudentCount">0</strong></div><div class="icon">♙</div></div>
+  </div><br>
+  <div class="grid two">
+    <div class="card">
+      <div class="row between"><h2>كمّل من حيث توقفت</h2><button class="btn secondary" onclick="show('prep')">كل التحضيرات</button></div>
+      <div id="dashboardLessons"><div class="muted" style="padding:15px 0">جاري تحميل تحضيراتك...</div></div>
+    </div>
+    <div class="card"><h2>آية اليوم</h2><div class="verse">«أَنَا هُوَ الطَّرِيقُ وَالْحَقُّ وَالْحَيَاةُ»<br><small>يوحنا 14: 6</small></div><button class="btn gold" onclick="saveNote('يوحنا 14:6')">أضف تأمل ✦</button></div>
+  </div><br>
+  <div class="grid two">
+    <div class="card"><h2>رحلتك الروحية هذا الأسبوع</h2><div class="progress"><div style="width:72%"></div></div><p class="muted">72% من هدفك الأسبوعي</p><div class="row"><button class="btn" onclick="show('spiritual')">متابعة التقدم</button><button class="btn secondary" onclick="addActivity()">+ نشاط روحي</button></div></div>
+    <div class="card"><h2>تذكير للخدمة</h2><p id="serviceReminder">جاري حساب المتابعة...</p><button class="btn" onclick="show('students')">متابعة المخدومين</button></div>
+  </div>
+</section>
+
+<section id="prep" class="section">
+  <div class="topbar"><div><h1>مِستر التحضير ✎</h1><div class="muted">حضّر أسرع، شارك، وابحث في تحضيرات الخدام.</div></div><button class="btn" onclick="newPrep()">+ تحضير جديد</button></div>
+  <div class="card">
+    <div class="search"><input id="topicSearch" placeholder="ابحث عن Topic مثل: الصلاة، المحبة، الغفران..." oninput="filterLessons()"><button class="btn" onclick="filterLessons()">بحث</button></div>
+    <div class="tabs"><button class="active">كل الأعمار</button><button>ابتدائي</button><button>إعدادي</button><button>ثانوي</button><button>شباب</button></div>
+    <div id="lessonList"></div>
+  </div><br>
+  <div class="grid two">
+    <div class="card"><h2>اقتراحات موثوقة</h2>
+      <div class="lesson"><b>عظة: كيف نعيش الإيمان عمليًا؟</b><p class="muted">محتوى مقترح • 18 دقيقة</p><button class="btn secondary" onclick="toast('تم حفظ الفيديو للمشاهدة لاحقًا')">حفظ</button></div>
+      <div class="lesson"><b>تأمل: الغفران</b><p class="muted">تأمل روحي • 11 دقيقة</p><button class="btn secondary" onclick="toast('تم حفظ التأمل')">حفظ</button></div>
+    </div>
+    <div class="card"><h2>أدوات جذب المخدوم</h2><p>أسئلة افتتاحية، ألعاب تعليمية، أمثلة من الحياة، وطرق تبسيط الموضوع.</p><div class="row"><button class="btn secondary" onclick="toast('تم توليد مجموعة أسئلة افتتاحية')">أسئلة افتتاحية</button><button class="btn secondary" onclick="toast('تم حفظ أفكار النشاط')">أفكار نشاط</button></div></div>
+  </div>
+</section>
+
+<section id="bible" class="section">
+  <div class="topbar"><div><h1>الكتاب المقدس ✝</h1><div class="muted">الكتاب المقدس كاملًا بالعربية والإنجليزية — فان دايك وKing James Version.</div></div></div>
+  <div class="card">
+    <div class="bible-controls">
+      <div class="field"><label>اللغة / الترجمة</label><select id="bibleLang" onchange="loadBibleBook()"><option value="ar">العربية — فان دايك</option><option value="en">English — King James Version</option></select></div>
+      <div class="field"><label>السفر</label><select id="bibleBook" onchange="updateChapterOptions();loadBibleChapter()"></select></div>
+      <div class="field"><label>الإصحاح</label><select id="bibleChapter" onchange="loadBibleChapter()"></select></div>
+    </div>
+    <div class="search" style="margin-top:14px"><input id="verseSearch" placeholder="ابحث داخل الإصحاح عن كلمة أو رقم آية..." oninput="filterBibleVerses()"><button class="btn" onclick="filterBibleVerses()">بحث</button></div>
+    <div id="bibleStatus" class="muted" style="margin-top:14px">جاري تحميل الكتاب المقدس...</div>
+    <div id="bibleActionBar" class="bible-actionbar"><button onclick="copySelectedVerse()">نسخ</button><button onclick="reflectSelectedVerse()">تأمل</button><button onclick="clearBibleSelection()">إلغاء</button></div>
+    <div id="verseList"></div>
+  </div>
+</section>
+
+<section id="spiritual" class="section">
+  <div class="topbar"><div><h1>حياتي الروحية ♡</h1><div class="muted">سجّل خطواتك الروحية اليومية وتابع استمراريتك.</div></div></div>
+  <div class="grid stats">
+    <div class="card stat"><div><div class="muted">Streak الحالي</div><strong id="spiritualStreak">0 🔥</strong></div></div>
+    <div class="card stat"><div><div class="muted">هذا الشهر</div><strong id="spiritualMonthCount">0</strong></div></div>
+    <div class="card stat"><div><div class="muted">صلوات مسجلة</div><strong id="prayerCount">0</strong></div></div>
+    <div class="card stat"><div><div class="muted">تأملات</div><strong id="reflectionCount">0</strong></div></div>
+  </div><br>
+  <div class="card">
+    <div class="row between"><div><h2 style="margin-bottom:4px">دفتر اليوم</h2><div class="muted" id="spiritualTodayLabel"></div></div><span class="account-type">كل علامة = نشاط حقيقي</span></div>
+    <div id="spiritualChecklist" class="spiritual-checklist"></div>
+  </div><br>
+  <div class="card"><h2>التقدم الأسبوعي</h2><div class="timeline" id="chart"></div><p class="muted" style="margin-top:30px">الـStreak يتحسب عند وجود نشاط روحي واحد على الأقل في اليوم، وليس بمجرد فتح الموقع.</p></div>
+</section>
+
+<section id="network" class="section">
+  <div class="topbar"><div><h1>المجتمع ◎</h1><div class="muted">شارك، شجّع، وصلّي مع مجتمع مِرْسَال.</div></div><button class="btn" onclick="openNewPost()">+ منشور جديد</button></div>
+  <div id="postComposer" class="card hide" style="margin-bottom:18px">
+    <h2>منشور جديد</h2><div class="field"><textarea id="newPostText" rows="5" placeholder="اكتب ما تريد مشاركته..."></textarea></div><br>
+    <div class="row"><button class="btn" onclick="createPost()">نشر</button><button class="btn secondary" onclick="closePostComposer()">إلغاء</button></div>
+  </div>
+  <div id="communityFeed"></div>
+</section>
+
+<section id="students" class="section">
+  <div class="topbar"><div><h1>المخدومين ♙</h1><div class="muted">اعرف احتياجاتهم وتابع كل واحد بشكل شخصي.</div></div><button class="btn" onclick="newStudent()">+ مخدوم جديد</button></div>
+  <div class="card"><div class="search"><input placeholder="ابحث عن اسم المخدوم..." oninput="filterStudents(this.value)"></div><div id="studentList"></div></div>
+</section>
+
+<section id="attendance" class="section">
+  <div class="topbar"><div><h1>الحضور والـQR 📷</h1><div class="muted">الخادم يمسح QR الخاص بالمخدوم لتسجيل حضوره.</div></div></div>
+  <div class="grid two">
+    <div class="card"><h2>Scanner</h2><div id="qr-reader" style="width:100%;max-width:520px;margin:auto"></div><p id="scannerStatus" class="muted" style="margin-top:12px">اضغط بدء المسح ثم وجّه الكاميرا إلى QR المخدوم.</p><button class="btn" onclick="startScanner()">📷 بدء المسح</button> <button class="btn secondary" onclick="stopScanner()">إيقاف</button></div>
+    <div class="card"><h2>حضور اليوم</h2><div id="attendanceSummary" class="muted">جاري التحميل...</div><div id="attendanceTodayList" style="margin-top:12px"></div></div>
+  </div>
+</section>
+
+<section id="calendar" class="section">
+  <div class="topbar"><div><h1>التقويم 📅</h1><div class="muted">شاهد اجتماعات الكشافة والأنشطة والأحداث القادمة.</div></div><button id="calendarAddBtn" class="btn" onclick="newCalendarEvent()">+ إضافة حدث</button></div>
+  <div class="card"><div class="row between"><button class="btn secondary" onclick="calendarPrevMonth()">‹</button><h2 id="calendarTitle" style="margin:0"></h2><button class="btn secondary" onclick="calendarNextMonth()">›</button></div><div id="calendarGrid" class="calendar-grid" style="margin-top:18px"></div></div>
+  <div class="card" style="margin-top:18px"><h2>الأحداث القادمة</h2><div id="upcomingEvents"></div></div>
+</section>
+
+<section id="account" class="section">
+  <div class="topbar">
+    <div><h1>حسابي 👤</h1><div class="muted">بياناتك الشخصية وكود الـQR الخاص بك.</div></div>
+    <div class="row"><button class="btn" onclick="openEditAccount()">تعديل البيانات</button><button class="btn logout-btn" onclick="logout()">تسجيل الخروج</button></div>
+  </div>
+  <div class="account-grid">
+    <div class="card">
+      <div class="profile-head">
+        <div class="profile-avatar" id="accountAvatar">م</div>
+        <div><h2 id="accountName" style="margin-bottom:6px">مستخدم مِرْسَال</h2><span class="account-type" id="accountType">خادم</span></div>
+      </div>
+      <div class="info-grid">
+        <div class="info-box"><div class="label">الاسم</div><b id="infoName">—</b></div>
+        <div class="info-box"><div class="label">نوع الحساب</div><b id="infoType">—</b></div>
+        <div class="info-box"><div class="label">المرحلة العمرية</div><b id="infoAge">—</b></div>
+        <div class="info-box"><div class="label">الكنيسة</div><b id="infoChurch">—</b></div>
+        <div class="info-box"><div class="label">الخدمة</div><b id="infoService">—</b></div>
+        <div class="info-box"><div class="label">البريد الإلكتروني</div><b id="infoEmail">—</b></div>
+      </div>
+      <div class="qr-note"><b>💡 ملاحظة مهمة</b><br>كود الـQR ده مرتبط بمعرّف حسابك الفريد. لاحقًا نقدر نستخدمه في تسجيل الحضور بالـQR بدون الحاجة لكتابة الاسم يدويًا.</div>
+      <div class="card bible-settings" style="margin-top:18px">
+        <div class="row between"><div><h2 style="margin-bottom:4px">Settings ⚙️</h2><div class="muted">Choose the language used across MERSAL.</div></div></div>
+        <div class="row" style="margin-top:12px">
+          <button id="langArabicBtn" class="btn secondary" onclick="setAppLanguage('ar')">العربية</button>
+          <button id="langEnglishBtn" class="btn" onclick="setAppLanguage('en')">English</button>
+        </div>
+      </div>
+    </div>
+    <div class="card qr-card">
+      <h2>QR Code الخاص بي 📱</h2><p class="muted">اعرض الكود للخادم أو جهاز تسجيل الحضور لمسحه.</p>
+      <div class="qr-wrap"><div id="qrcode"></div></div>
+      <div class="muted" style="font-size:12px;margin-bottom:7px">معرّف المستخدم</div>
+      <div class="qr-id" id="qrUserId"></div>
+      <div class="row" style="justify-content:center;margin-top:15px">
+        <button class="btn" onclick="downloadQR()">تحميل QR</button>
+        <button class="btn secondary" onclick="copyQRId()">نسخ المعرّف</button>
+        <button class="btn gold" onclick="refreshQR()">تحديث QR</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<div class="modal" id="modal"><div class="modalbox" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+
+<script>
+/* =========================================================
+   MERSAL — Supabase-connected frontend
+   No demo records are used for students, lessons, notes,
+   spiritual activities, or attendance.
+   ========================================================= */
+
+const SUPABASE_URL = "https://wcaodvafxmmlftltwvlo.supabase.co";
+const SUPABASE_KEY = "sb_publishable_YrlpxONuTM1EZ1bt2J0O0A_2IuNTTCU";
+
+let supabaseClient = null;
+let currentUser = null;
+let account = {name:"",type:"leader",age:"",church:"",service:"",email:""};
+let userId = "";
+let lessons = [];
+let students = [];
+let currentBibleVerses = [];
+let currentBibleBook = null;
+
+function normalizeRole(role){
+  const r=String(role||'').trim().toLowerCase();
+  if(['leader','قائد','خادم','servant'].includes(r)) return 'leader';
+  if(['scout','كشاف','مخدوم','member','student'].includes(r)) return 'scout';
+  return 'leader';
+}
+function isLeader(){return normalizeRole(account?.type)==='leader'}
+function roleLabel(role=account?.type){
+  const r=normalizeRole(role); return document.documentElement.lang==='ar'?(r==='leader'?'قائد':'كشاف'):(r==='leader'?'Leader':'Scout');
+}
+
+function isSupabaseConfigured(){
+  return SUPABASE_URL.startsWith("https://") &&
+    !SUPABASE_URL.includes("YOUR_SUPABASE") &&
+    SUPABASE_KEY && !SUPABASE_KEY.includes("YOUR_SUPABASE");
+}
+
+if(isSupabaseConfigured() && window.supabase){
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+function setAuthMessage(type,msg){
+  const e=document.getElementById('authError'), s=document.getElementById('authSuccess');
+  e.style.display='none'; s.style.display='none';
+  if(type==='error'){e.textContent=msg;e.style.display='block'}
+  if(type==='success'){s.textContent=msg;e.style.display='block'}
+}
+
+function switchAuth(mode){
+  document.getElementById('loginTab').classList.toggle('active',mode==='login');
+  document.getElementById('signupTab').classList.toggle('active',mode==='signup');
+  document.getElementById('loginForm').classList.toggle('active',mode==='login');
+  document.getElementById('signupForm').classList.toggle('active',mode==='signup');
+  setAuthMessage('','');
+}
+function showAuthScreen(){
+  document.getElementById('authScreen').classList.add('show');
+  document.getElementById('appShell').style.display='none';
+}
+function hideAuthScreen(){
+  document.getElementById('authScreen').classList.remove('show');
+  document.getElementById('appShell').style.display='flex';
+}
+function friendlyAuthError(error){
+  const msg=error?.message||String(error||'حدث خطأ غير معروف');
+  const low=msg.toLowerCase();
+  if(low.includes('invalid login credentials')) return 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+  if(low.includes('user already registered')) return 'هذا البريد الإلكتروني مسجل بالفعل. جرّب تسجيل الدخول.';
+  if(low.includes('email not confirmed')) return 'الحساب لم يتم تأكيد بريده الإلكتروني بعد. افتح رسالة التأكيد التي أرسلها Supabase.';
+  if(low.includes('relation') && low.includes('profiles')) return 'جدول profiles غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.';
+  if(low.includes('relation') && low.includes('students')) return 'جدول students غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.';
+  if(low.includes('relation') && low.includes('lessons')) return 'جدول lessons غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.';
+  if(low.includes('relation') && low.includes('spiritual_activities')) return 'جدول spiritual_activities غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.';
+  if(low.includes('relation') && low.includes('notes')) return 'جدول notes غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.';
+  if(low.includes('relation') && low.includes('attendance')) return 'جدول attendance غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.';
+  if(low.includes('permission denied') || low.includes('row-level security') || low.includes('violates row-level security'))
+    return 'تم رفض العملية بسبب صلاحيات قاعدة البيانات (RLS). راجع سياسات Mersal التي تم تنفيذها في Supabase.';
+  return msg;
+}
+
+async function login(event){
+  event.preventDefault();
+  if(!supabaseClient){setAuthMessage('error','لم يتم إعداد Supabase.');return}
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  setAuthMessage('','');
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error){setAuthMessage('error',friendlyAuthError(error));return}
+  currentUser=data.user;
+  try{
+    await loadProfile();
+    hideAuthScreen();
+    await loadAllData();
+    toast('تم تسجيل الدخول بنجاح 👋');
+  }catch(e){setAuthMessage('error',friendlyAuthError(e))}
+}
+
+async function signup(event){
+  event.preventDefault();
+  if(!supabaseClient){setAuthMessage('error','لم يتم إعداد Supabase.');return}
+  const name=document.getElementById('signupName').value.trim();
+  const email=document.getElementById('signupEmail').value.trim();
+  const password=document.getElementById('signupPassword').value;
+  const role=document.getElementById('signupRole').value;
+  const age=document.getElementById('signupAge').value;
+  setAuthMessage('','');
+
+  const {data,error}=await supabaseClient.auth.signUp({
+    email,password,
+    options:{data:{full_name:name,role,age_group:age}}
+  });
+  if(error){setAuthMessage('error',friendlyAuthError(error));return}
+
+  if(data.session){
+    currentUser=data.user;
+    try{
+      await saveProfile({name,type:role,age,church:'',service:'',email});
+      hideAuthScreen();
+      await loadAllData();
+      toast('تم إنشاء الحساب بنجاح ✨');
+    }catch(e){setAuthMessage('error',friendlyAuthError(e))}
+  }else{
+    setAuthMessage('success','تم إنشاء الحساب. افتح رسالة التأكيد التي وصلت إلى بريدك الإلكتروني، ثم ارجع وسجّل الدخول.');
+    switchAuth('login');
+  }
+}
+
+async function loadProfile(){
+  if(!supabaseClient || !currentUser) return;
+  const {data,error}=await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
+  if(error) throw error;
+  if(data){
+    account={
+      name:data.full_name||'',
+      type:normalizeRole(data.role||'leader'),
+      age:data.age_group||'',
+      church:data.church||'',
+      service:data.service_name||'',
+      email:data.email||currentUser.email||''
+    };
+  }else{
+    account={
+      name:currentUser.user_metadata?.full_name||currentUser.email?.split('@')[0]||'مستخدم مِرْسَال',
+      type:normalizeRole(currentUser.user_metadata?.role||'leader'),
+      age:currentUser.user_metadata?.age_group||'',
+      church:'',
+      service:'',
+      email:currentUser.email||''
+    };
+    await saveProfile(account);
+  }
+  userId=currentUser.id;
+  renderAccount();
+}
+
+async function saveProfile(a){
+  if(!supabaseClient || !currentUser) return;
+  const payload={
+    id:currentUser.id,
+    full_name:a.name||'',
+    role:normalizeRole(a.type||'leader'),
+    age_group:a.age||'',
+    church:a.church||'',
+    service_name:a.service||'',
+    email:currentUser.email||a.email||''
+  };
+  const {data,error}=await supabaseClient.from('profiles').upsert(payload).select().single();
+  if(error) throw error;
+  account={
+    name:data.full_name||'',type:normalizeRole(data.role||'leader'),age:data.age_group||'',
+    church:data.church||'',service:data.service_name||'',
+    email:data.email||currentUser.email||''
+  };
+  userId=currentUser.id;
+}
+
+async function saveAccount(){
+  if(!currentUser){showAuthScreen();return}
+  const next={
+    name:document.getElementById('editName').value.trim()||'مستخدم مِرْسَال',
+    type:document.getElementById('editType').value,
+    age:document.getElementById('editAge').value,
+    church:document.getElementById('editChurch').value.trim(),
+    service:document.getElementById('editService').value.trim(),
+    email:currentUser.email||''
+  };
+  try{
+    await saveProfile(next);
+    closeModal(); renderAccount(); toast('تم حفظ بيانات الحساب في قاعدة البيانات ✨');
+  }catch(error){toast('تعذر حفظ البيانات: '+friendlyAuthError(error))}
+}
+
+async function logout(){
+  if(!supabaseClient) return;
+  const {error}=await supabaseClient.auth.signOut();
+  if(error){toast(friendlyAuthError(error));return}
+  currentUser=null;userId='';
+  account={name:'',type:'leader',age:'',church:'',service:'',email:''};
+  lessons=[];students=[];
+  showAuthScreen();switchAuth('login');
+  toast('تم تسجيل الخروج');
+}
+
+async function initAuth(){
+  if(!supabaseClient){
+    showAuthScreen();
+    setAuthMessage('error','تعذر تشغيل Supabase في هذه الصفحة. تأكد من اتصال الإنترنت.');
+    return;
+  }
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error){showAuthScreen();setAuthMessage('error',friendlyAuthError(error));return}
+  currentUser=data.session?.user||null;
+  if(currentUser){
+    try{await loadProfile();hideAuthScreen();await loadAllData();}
+    catch(e){showAuthScreen();setAuthMessage('error',friendlyAuthError(e))}
+  }else showAuthScreen();
+
+  supabaseClient.auth.onAuthStateChange(async (_event,session)=>{
+    currentUser=session?.user||null;
+    if(currentUser){
+      try{
+        await loadProfile();
+        hideAuthScreen();
+        await loadAllData();
+      }catch(e){showAuthScreen();setAuthMessage('error',friendlyAuthError(e))}
+    }else showAuthScreen();
+  });
+}
+
+/* =========================
+   DATA — real Supabase CRUD
+   ========================= */
+async function loadAllData(){
+  if(!currentUser) return;
+  await Promise.all([loadLessons(),loadStudents(),loadSpiritual(),loadNotes(),loadAttendance(),loadCalendar().catch(()=>{window.calendarAvailable=false;window.calendarEvents=[];})]);
+  renderDashboard();
+  renderLessons();
+  renderStudents();
+  renderChart();
+  renderAccount();
+}
+
+async function loadLessons(){
+  const {data,error}=await supabaseClient.from('lessons')
+    .select('*').order('updated_at',{ascending:false});
+  if(error) throw error;
+  lessons=data||[];
+}
+async function loadStudents(){
+  const {data,error}=await supabaseClient.from('students')
+    .select('*').order('created_at',{ascending:false});
+  if(error) throw error;
+  students=data||[];
+}
+async function loadSpiritual(){
+  const {data,error}=await supabaseClient.from('spiritual_activities')
+    .select('*').order('activity_date',{ascending:false}).order('created_at',{ascending:false});
+  if(error) throw error;
+  window.spiritualActivities=data||[];
+}
+async function loadNotes(){
+  const {data,error}=await supabaseClient.from('notes')
+    .select('*').order('updated_at',{ascending:false});
+  if(error) throw error;
+  window.userNotes=data||[];
+}
+async function loadAttendance(){
+  const {data,error}=await supabaseClient.from('attendance')
+    .select('*').order('attendance_date',{ascending:false});
+  if(error) throw error;
+  window.attendanceRecords=data||[];
+}
+
+function show(id,btn){
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id==='prep') renderLessons();
+  if(id==='bible' && !document.getElementById('bibleBook').options.length) initBible();
+  if(id==='students') renderStudents();
+  if(id==='spiritual') renderChart();
+  if(id==='account') renderAccount();
+  if(id==='dashboard') renderDashboard();
+  if(id==='network') renderNetwork();
+  if(id==='calendar') renderCalendar();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function formatLastUpdate(date){
+  if(!date)return 'بدون تاريخ';
+  const d=new Date(date),diff=Math.floor((Date.now()-d.getTime())/86400000);
+  if(diff<=0)return 'اليوم'; if(diff===1)return 'منذ يوم'; return `منذ ${diff} أيام`;
+}
+
+function renderDashboard(){
+  const prep=document.getElementById('prepCount');
+  const studentCount=document.getElementById('studentCount');
+  if(prep) prep.textContent=lessons.filter(x=>x.user_id===userId).length;
+  if(studentCount) studentCount.textContent=students.length;
+  const dashboardStudents=document.getElementById('dashboardStudentCount');
+  if(dashboardStudents) dashboardStudents.textContent=students.length;
+  const spiritual=window.spiritualActivities||[];
+  const last7=new Set(spiritual.map(x=>x.activity_date));
+  const streak=calculateStreak(spiritual);
+  const s=document.getElementById('dashboardStreak');
+  if(s) s.textContent=streak+' 🔥';
+  const saved=document.getElementById('savedNoteCount');
+  if(saved) saved.textContent=(window.userNotes||[]).length;
+  const dash=document.getElementById('dashboardLessons');
+  if(dash){
+    const own=lessons.filter(x=>x.user_id===userId).slice(0,2);
+    dash.innerHTML=own.length?own.map(x=>`<div class=\"lesson\"><div class=\"row between\"><div><b>${escapeHtml(x.title)}</b><div class=\"muted\">${escapeHtml(x.age_group||'')} • ${escapeHtml(x.duration||'')}</div></div><span class=\"tag\">${formatLastUpdate(x.updated_at)}</span></div><p>${escapeHtml(x.description||x.main_points||'')}</p><button class=\"btn\" onclick=\"openLesson('${escapeAttr(x.id)}')\">فتح التحضير</button></div>`).join(''):'<div class=\"muted\" style=\"padding:15px 0\">لا توجد تحضيرات بعد. أنشئ أول تحضير من «مستر التحضير».</div>';
+  }
+  const reminder=document.getElementById('serviceReminder');
+  if(reminder){
+    const weekAgo=new Date(Date.now()-7*86400000);
+    const pending=students.filter(s=>!s.last_contact_at || new Date(s.last_contact_at)<weekAgo).length;
+    reminder.textContent=pending?`لديك ${pending} مخدوم لم يتم التواصل معه خلال آخر 7 أيام.`:'كل المخدومين لديهم متابعة حديثة خلال آخر 7 أيام. ✨';
+  }
+  const weekly=document.getElementById('weeklyProgress');
+  if(weekly){
+    const pct=Math.min(100,Math.round(last7.size/7*100));
+    weekly.style.width=pct+'%';
+    const label=document.getElementById('weeklyProgressText');
+    if(label) label.textContent=pct+'% من أيام الأسبوع فيها نشاط';
+  }
+}
+
+function renderLessons(arr=lessons){
+  const list=document.getElementById('lessonList');
+  if(!list)return;
+  if(!arr.length){
+    list.innerHTML='<div class="muted" style="padding:25px;text-align:center">لا توجد تحضيرات محفوظة بعد. اضغط «تحضير جديد» لإضافة أول تحضير.</div>';
+    return;
+  }
+  list.innerHTML=arr.map(x=>{
+    const owner=x.user_id===userId;
+    return `<div class="lesson">
+      <div class="row between">
+        <div><b>${escapeHtml(x.title)}</b><div class="muted">${escapeHtml(x.age_group||'')} • ${escapeHtml(x.duration||'')}</div></div>
+        <span class="tag">${owner?'تحضير شخصي':'تحضير مشترك'}</span>
+      </div>
+      <p>${escapeHtml(x.description||x.main_points||'')}</p>
+      <button class="btn" onclick="openLesson('${escapeAttr(x.id)}')">فتح</button>
+      ${owner?`<button class="btn secondary" onclick="editLesson('${escapeAttr(x.id)}')">تعديل</button>
+      <button class="btn logout-btn" onclick="deleteLesson('${escapeAttr(x.id)}')">حذف</button>`:''}
+    </div>`;
+  }).join('');
+}
+function filterLessons(){
+  const q=document.getElementById('topicSearch').value.trim().toLowerCase();
+  renderLessons(lessons.filter(x=>
+    `${x.title||''} ${x.description||''} ${x.main_verse||''} ${x.main_points||''} ${x.application||''}`
+      .toLowerCase().includes(q)));
+}
+
+function openLesson(id){
+  const x=lessons.find(l=>l.id===id);
+  if(!x)return;
+  document.getElementById('modalBox').innerHTML=`
+    <div class="row between"><h2>${escapeHtml(x.title)}</h2><button class="btn secondary" onclick="closeModal()">إغلاق</button></div>
+    <p class="muted">${escapeHtml(x.age_group||'')} • ${escapeHtml(x.duration||'')}</p>
+    ${x.main_verse?`<div class="verse">${escapeHtml(x.main_verse)}</div>`:''}
+    <h3>الوصف</h3><p>${escapeHtml(x.description||'—')}</p>
+    <h3>الهدف</h3><p>${escapeHtml(x.objective||'—')}</p>
+    <h3>الافتتاحية</h3><p>${escapeHtml(x.opening||'—')}</p>
+    <h3>النقاط الأساسية</h3><p style="white-space:pre-wrap">${escapeHtml(x.main_points||'—')}</p>
+    <h3>التطبيق</h3><p style="white-space:pre-wrap">${escapeHtml(x.application||'—')}</p>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+function newPrep(existing=null){
+  const x=existing||{};
+  document.getElementById('modalBox').innerHTML=`
+    <h2>${existing?'تعديل التحضير ✎':'تحضير جديد ✎'}</h2>
+    <div class="field"><label>عنوان الموضوع</label><input id="newTitle" value="${escapeAttr(x.title||'')}" required></div><br>
+    <div class="field"><label>الفئة العمرية</label><select id="newAge">
+      ${['ابتدائي','إعدادي','ثانوي','شباب'].map(a=>`<option ${x.age_group===a?'selected':''}>${a}</option>`).join('')}
+    </select></div><br>
+    <div class="field"><label>المدة</label><input id="newDuration" value="${escapeAttr(x.duration||'15 دقيقة')}"></div><br>
+    <div class="field"><label>الآية الرئيسية</label><input id="newVerse" value="${escapeAttr(x.main_verse||'')}"></div><br>
+    <div class="field"><label>الوصف</label><textarea id="newDesc" rows="3">${escapeHtml(x.description||'')}</textarea></div><br>
+    <div class="field"><label>الهدف</label><textarea id="newObjective" rows="3">${escapeHtml(x.objective||'')}</textarea></div><br>
+    <div class="field"><label>الافتتاحية</label><textarea id="newOpening" rows="3">${escapeHtml(x.opening||'')}</textarea></div><br>
+    <div class="field"><label>النقاط الأساسية</label><textarea id="newPoints" rows="5">${escapeHtml(x.main_points||'')}</textarea></div><br>
+    <div class="field"><label>التطبيق</label><textarea id="newApplication" rows="4">${escapeHtml(x.application||'')}</textarea></div><br>
+    <label><input id="newShared" type="checkbox" ${x.is_shared?'checked':''}> مشاركة هذا التحضير مع الخدام</label><br><br>
+    <button class="btn" onclick="savePrep('${escapeAttr(x.id||'')}')">حفظ التحضير</button>
+    <button class="btn secondary" onclick="closeModal()">إلغاء</button>`;
+  document.getElementById('modal').classList.add('show');
+}
+function editLesson(id){
+  const x=lessons.find(l=>l.id===id);
+  if(x)newPrep(x);
+}
+async function savePrep(id=''){
+  if(!currentUser)return;
+  const title=document.getElementById('newTitle').value.trim();
+  if(!title){toast('اكتب عنوان التحضير أولًا');return}
+  const payload={
+    user_id:userId,title,
+    age_group:document.getElementById('newAge').value,
+    duration:document.getElementById('newDuration').value.trim(),
+    main_verse:document.getElementById('newVerse').value.trim(),
+    description:document.getElementById('newDesc').value.trim(),
+    objective:document.getElementById('newObjective').value.trim(),
+    opening:document.getElementById('newOpening').value.trim(),
+    main_points:document.getElementById('newPoints').value.trim(),
+    application:document.getElementById('newApplication').value.trim(),
+    is_shared:document.getElementById('newShared').checked
+  };
+  try{
+    const q=id
+      ?supabaseClient.from('lessons').update(payload).eq('id',id).eq('user_id',userId)
+      :supabaseClient.from('lessons').insert(payload);
+    const {error}=await q;
+    if(error)throw error;
+    await loadLessons();closeModal();renderLessons();renderDashboard();
+    toast(id?'تم تحديث التحضير ✨':'تم حفظ التحضير في Supabase ✨');
+  }catch(e){toast('تعذر حفظ التحضير: '+friendlyAuthError(e))}
+}
+async function deleteLesson(id){
+  if(!confirm('حذف هذا التحضير نهائيًا؟'))return;
+  const {error}=await supabaseClient.from('lessons').delete().eq('id',id).eq('user_id',userId);
+  if(error){toast('تعذر الحذف: '+friendlyAuthError(error));return}
+  await loadLessons();renderLessons();renderDashboard();toast('تم حذف التحضير');
+}
+
+/* =========================
+   BIBLE
+   ========================= */
+const bibleBooks=[
+  ['Gen','التكوين','Genesis',50],['Exod','الخروج','Exodus',40],['Lev','اللاويين','Leviticus',27],['Num','العدد','Numbers',36],['Deut','التثنية','Deuteronomy',34],['Josh','يشوع','Joshua',24],['Judg','القضاة','Judges',21],['Ruth','راعوث','Ruth',4],['1Sam','صموئيل الأول','1 Samuel',31],['2Sam','صموئيل الثاني','2 Samuel',24],['1Kgs','الملوك الأول','1 Kings',22],['2Kgs','الملوك الثاني','2 Kings',25],['1Chr','أخبار الأيام الأول','1 Chronicles',29],['2Chr','أخبار الأيام الثاني','2 Chronicles',36],['Ezra','عزرا','Ezra',10],['Neh','نحميا','Nehemiah',13],['Esth','أستير','Esther',10],['Job','أيوب','Job',42],['Ps','المزامير','Psalms',150],['Prov','الأمثال','Proverbs',31],['Eccl','الجامعة','Ecclesiastes',12],['Song','نشيد الأنشاد','Song of Solomon',8],['Isa','إشعياء','Isaiah',66],['Jer','إرميا','Jeremiah',52],['Lam','مراثي إرميا','Lamentations',5],['Ezek','حزقيال','Ezekiel',48],['Dan','دانيال','Daniel',12],['Hos','هوشع','Hosea',14],['Joel','يوئيل','Joel',3],['Amos','عاموس','Amos',9],['Obad','عوبديا','Obadiah',1],['Jonah','يونان','Jonah',4],['Mic','ميخا','Micah',7],['Nah','ناحوم','Nahum',3],['Hab','حبقوق','Habakkuk',3],['Zeph','صفنيا','Zephaniah',3],['Hag','حجي','Haggai',2],['Zech','زكريا','Zechariah',14],['Mal','ملاخي','Malachi',4],
+  ['Matt','متى','Matthew',28],['Mark','مرقس','Mark',16],['Luke','لوقا','Luke',24],['John','يوحنا','John',21],['Acts','أعمال الرسل','Acts',28],['Rom','رومية','Romans',16],['1Cor','كورنثوس الأولى','1 Corinthians',16],['2Cor','كورنثوس الثانية','2 Corinthians',13],['Gal','غلاطية','Galatians',6],['Eph','أفسس','Ephesians',6],['Phil','فيلبي','Philippians',4],['Col','كولوسي','Colossians',4],['1Thess','تسالونيكي الأولى','1 Thessalonians',5],['2Thess','تسالونيكي الثانية','2 Thessalonians',3],['1Tim','تيموثاوس الأولى','1 Timothy',6],['2Tim','تيموثاوس الثانية','2 Timothy',4],['Titus','تيطس','Titus',3],['Phlm','فليمون','Philemon',1],['Heb','العبرانيين','Hebrews',13],['Jas','يعقوب','James',5],['1Pet','بطرس الأولى','1 Peter',5],['2Pet','بطرس الثانية','2 Peter',3],['1John','يوحنا الأولى','1 John',5],['2John','يوحنا الثانية','2 John',1],['3John','يوحنا الثالثة','3 John',1],['Jude','يهوذا','Jude',1],['Rev','الرؤيا','Revelation',22]
+];
+
+
+function initBible(){
+  const book=document.getElementById('bibleBook'); if(!book)return;
+  const lang=document.getElementById('bibleLang').value;
+  book.innerHTML=bibleBooks.map(b=>`<option value="${b[0]}">${lang==='ar'?b[1]+' — '+b[2]:b[2]+' — '+b[1]}</option>`).join('');
+  book.value='John';updateChapterOptions();loadBibleChapter();
+}
+function updateChapterOptions(){
+  const b=bibleBooks.find(x=>x[0]===document.getElementById('bibleBook').value)||bibleBooks[0];
+  currentBibleBook=b;
+  document.getElementById('bibleChapter').innerHTML=Array.from({length:b[3]},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
+}
+async function loadBibleBook(){initBible()}
+async function loadBibleChapter(){
+  const status=document.getElementById('bibleStatus'),list=document.getElementById('verseList');
+  if(!status||!list)return;
+  const lang=document.getElementById('bibleLang').value;
+  const book=bibleBooks.find(x=>x[0]===document.getElementById('bibleBook').value)||bibleBooks[0];
+  const chapter=Number(document.getElementById('bibleChapter').value||1);
+  status.textContent='جاري تحميل الإصحاح...';list.innerHTML='';
+  const base=lang==='ar'
+    ?'https://raw.githubusercontent.com/midvash/bible-data/main/versions/ar/svd/books/'
+    :'https://raw.githubusercontent.com/midvash/bible-data/main/versions/en/kjv/books/';
+  try{
+    const res=await fetch(base+book[0]+'.json');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const ch=data.chapters?.[chapter-1];
+    currentBibleVerses=ch?.verses||[];
+    renderBibleVerses(currentBibleVerses);
+    status.textContent=lang==='ar'?`الكتاب المقدس فان دايك • ${book[1]} ${chapter}`:`King James Version • ${book[2]} ${chapter}`;
+  }catch(e){
+    status.textContent='';list.innerHTML='<div class="bible-error">تعذر تحميل النص الآن. تأكد من اتصال الإنترنت ثم حاول مرة أخرى.</div>';
+  }
+}
+function renderBibleVerses(arr){
+  const lang=document.getElementById('bibleLang').value,book=currentBibleBook;
+  selectedBibleVerse=null;
+  document.getElementById('bibleActionBar')?.classList.remove('show');
+  document.getElementById('verseList').innerHTML=`<div class="bible-chapter">${arr.map(v=>{
+    const n=v.number??v.verse??'',text=v.text||v.content||'';
+    const ref=`${lang==='ar'?book[1]:book[2]} ${document.getElementById('bibleChapter').value}:${n}`;
+    return `<div class="bible-verse ${lang==='en'?'en':''}" data-verse="${escapeAttr(String(n))}" onclick="selectBibleVerse('${escapeAttr(String(n))}')"><span class="num">${n}</span>${escapeHtml(text)}</div>`;
+  }).join('')}</div>`;
+}
+let selectedBibleVerse=null;
+function selectBibleVerse(num){
+  const v=currentBibleVerses.find(x=>String(x.number??x.verse??'')===String(num));
+  if(!v)return;
+  selectedBibleVerse=v;
+  document.querySelectorAll('.bible-verse').forEach(el=>el.classList.toggle('selected',el.dataset.verse===String(num)));
+  document.getElementById('bibleActionBar')?.classList.add('show');
+}
+function clearBibleSelection(){selectedBibleVerse=null;document.querySelectorAll('.bible-verse').forEach(el=>el.classList.remove('selected'));document.getElementById('bibleActionBar')?.classList.remove('show')}
+function getSelectedBibleRef(){
+  if(!selectedBibleVerse||!currentBibleBook)return '';
+  const lang=document.getElementById('bibleLang').value;
+  return `${lang==='ar'?currentBibleBook[1]:currentBibleBook[2]} ${document.getElementById('bibleChapter').value}:${selectedBibleVerse.number??selectedBibleVerse.verse??''}`;
+}
+function copySelectedVerse(){if(!selectedBibleVerse)return;copyBibleVerse(selectedBibleVerse.text||selectedBibleVerse.content||'');}
+function reflectSelectedVerse(){const ref=getSelectedBibleRef();if(ref)saveNote(ref);}
+function filterBibleVerses(){
+  const q=(document.getElementById('verseSearch').value||'').trim().toLowerCase();
+  if(!q){renderBibleVerses(currentBibleVerses);return}
+  renderBibleVerses(currentBibleVerses.filter(v=>String(v.number??v.verse??'').includes(q)||(v.text||v.content||'').toLowerCase().includes(q)));
+}
+function copyBibleVerse(text){navigator.clipboard?.writeText(text);toast('تم نسخ الآية')}
+
+/* =========================
+   NOTES / REFLECTIONS
+   ========================= */
+function saveNote(reference){
+  document.getElementById('modalBox').innerHTML=`
+    <h2>تأمل على ${escapeHtml(reference)}</h2>
+    <div class="field"><textarea id="noteText" rows="8" placeholder="اكتب تأملك أو ملاحظتك الخاصة..."></textarea></div><br>
+    <button class="btn" onclick="saveNoteToDb('${escapeAttr(reference)}')">حفظ التأمل</button>
+    <button class="btn secondary" onclick="closeModal()">إلغاء</button>`;
+  document.getElementById('modal').classList.add('show');
+}
+async function saveNoteToDb(reference){
+  const noteText=document.getElementById('noteText').value.trim();
+  if(!noteText){toast('اكتب التأمل أولًا');return}
+  const {error}=await supabaseClient.from('notes').insert({
+    user_id:userId,reference,note_text:noteText
+  });
+  if(error){toast('تعذر حفظ التأمل: '+friendlyAuthError(error));return}
+  await loadNotes();closeModal();toast('تم حفظ التأمل في قاعدة البيانات ✨');
+}
+async function deleteNote(id){
+  const {error}=await supabaseClient.from('notes').delete().eq('id',id).eq('user_id',userId);
+  if(error){toast('تعذر حذف التأمل');return}
+  await loadNotes();toast('تم حذف التأمل');
+}
+
+/* =========================
+   SPIRITUAL LIFE
+   ========================= */
+function calculateStreak(items){
+  const dates=new Set((items||[]).map(x=>x.activity_date));
+  let d=new Date(); d.setHours(0,0,0,0);
+  let count=0;
+  while(true){
+    const key=localDateKey(d);
+    if(!dates.has(key))break;
+    count++; d.setDate(d.getDate()-1);
+  }
+  return count;
+}
+function localDateKey(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function renderChart(){
+  const chart=document.getElementById('chart');if(!chart)return;
+  const items=window.spiritualActivities||[];
+  const days=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d)}
+  chart.innerHTML=days.map(d=>{
+    const key=localDateKey(d);
+    const count=items.filter(x=>x.activity_date===key).length;
+    const h=Math.max(8,Math.min(100,count*25));
+    return `<div class="bar" style="height:${h}%"><span>${d.toLocaleDateString('ar-EG',{weekday:'short'})}</span></div>`;
+  }).join('');
+  const month=new Date().toISOString().slice(0,7);
+  const monthly=items.filter(x=>(x.activity_date||'').startsWith(month)).length;
+  const prayer=items.filter(x=>x.activity_type==='صلاة').length;
+  const reflection=items.filter(x=>x.activity_type==='تأمل').length;
+  const monthEl=document.getElementById('spiritualMonthCount');
+  const prayerEl=document.getElementById('prayerCount');
+  const reflectionEl=document.getElementById('reflectionCount');
+  const streakEl=document.getElementById('spiritualStreak');
+  if(monthEl)monthEl.textContent=monthly;
+  if(prayerEl)prayerEl.textContent=prayer;
+  if(reflectionEl)reflectionEl.textContent=reflection;
+  if(streakEl)streakEl.textContent=calculateStreak(items)+' 🔥';
+  renderDashboard();
+}
+function addActivity(){
+  document.getElementById('modalBox').innerHTML=`
+    <h2>تسجيل نشاط روحي ♡</h2>
+    <div class="field"><label>نوع النشاط</label><select id="activityType">
+      <option value="صلاة">صلاة</option><option value="قراءة">قراءة</option><option value="تأمل">تأمل</option><option value="خدمة">خدمة</option>
+    </select></div><br>
+    <div class="field"><label>التاريخ</label><input id="activityDate" type="date" value="${localDateKey(new Date())}"></div><br>
+    <div class="field"><label>ملاحظات</label><textarea id="activityNotes" rows="4" placeholder="اختياري"></textarea></div><br>
+    <button class="btn" onclick="saveActivity()">حفظ النشاط</button>
+    <button class="btn secondary" onclick="closeModal()">إلغاء</button>`;
+  document.getElementById('modal').classList.add('show');
+}
+async function saveActivity(){
+  const payload={
+    user_id:userId,
+    activity_type:document.getElementById('activityType').value,
+    activity_date:document.getElementById('activityDate').value||localDateKey(new Date()),
+    notes:document.getElementById('activityNotes').value.trim()
+  };
+  const {error}=await supabaseClient.from('spiritual_activities').insert(payload);
+  if(error){toast('تعذر تسجيل النشاط: '+friendlyAuthError(error));return}
+  await loadSpiritual();closeModal();renderChart();toast('تم تسجيل النشاط الروحي ✨');
+}
+
+/* =========================
+   STUDENTS + ATTENDANCE
+   ========================= */
+function renderStudents(arr=students){
+  const list=document.getElementById('studentList');if(!list)return;
+  if(!arr.length){
+    list.innerHTML='<div class="muted" style="padding:25px;text-align:center">لا يوجد مخدومون محفوظون بعد.</div>';return;
+  }
+  list.innerHTML=arr.map(s=>`
+    <div class="person">
+      <div class="mini">${escapeHtml((s.full_name||'م')[0])}</div>
+      <div style="flex:1"><b>${escapeHtml(s.full_name)}</b><div class="muted">${escapeHtml(s.age_group||'')} • ${escapeHtml(s.current_need||'لا يوجد احتياج مسجل')}</div></div>
+      <span class="muted">${formatLastContact(s.last_contact_at)}</span>
+      <button class="btn secondary" onclick="student('${escapeAttr(s.id)}')">متابعة</button>
+    </div>`).join('');
+}
+function filterStudents(q){renderStudents(students.filter(s=>(s.full_name||'').includes(q)))}
+function formatLastContact(date){
+  if(!date)return 'لم يتم التواصل بعد';
+  const d=new Date(date),diff=Math.floor((Date.now()-d.getTime())/86400000);
+  if(diff<=0)return 'اليوم'; if(diff===1)return 'منذ يوم'; return `منذ ${diff} أيام`;
+}
+function student(id){
+  const s=students.find(x=>x.id===id);if(!s)return;
+  const records=(window.attendanceRecords||[]).filter(x=>x.student_id===id).slice(0,10);
+  const recent=records.length?records.map(r=>`${escapeHtml(r.attendance_date)} — ${escapeHtml(r.status)}`).join('<br>'):'لا يوجد حضور مسجل.';
+  document.getElementById('modalBox').innerHTML=`
+    <h2>ملف ${escapeHtml(s.full_name)}</h2>
+    <p><b>المرحلة:</b> ${escapeHtml(s.age_group||'—')}</p>
+    <p><b>الاحتياج الحالي:</b> ${escapeHtml(s.current_need||'—')}</p>
+    <p><b>آخر تواصل:</b> ${formatLastContact(s.last_contact_at)}</p>
+    <div class="field"><label>ملاحظة متابعة</label><textarea id="studentNote" rows="4" placeholder="اكتب ملاحظة جديدة">${escapeHtml(s.notes||'')}</textarea></div><br>
+    <div class="row">
+      <button class="btn" onclick="saveStudentFollowup('${escapeAttr(id)}')">حفظ المتابعة</button>
+      <button class="btn secondary" onclick="startLinkStudentQR('${escapeAttr(id)}')">🔗 ربط QR بالمخدوم</button>
+      <button class="btn secondary" onclick="recordAttendance('${escapeAttr(id)}','حاضر')">حاضر</button>
+      <button class="btn gold" onclick="recordAttendance('${escapeAttr(id)}','متأخر')">متأخر</button>
+      <button class="btn logout-btn" onclick="recordAttendance('${escapeAttr(id)}','غائب')">غائب</button>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+    <h3>آخر سجلات الحضور</h3><p class="muted">${recent}</p>
+    <button class="btn secondary" onclick="closeModal()">إغلاق</button>`;
+  document.getElementById('modal').classList.add('show');
+}
+async function saveStudentFollowup(id){
+  const note=document.getElementById('studentNote').value.trim();
+  const {error}=await supabaseClient.from('students').update({
+    notes:note,last_contact_at:new Date().toISOString()
+  }).eq('id',id).eq('user_id',userId);
+  if(error){toast('تعذر حفظ المتابعة: '+friendlyAuthError(error));return}
+  await loadStudents();closeModal();renderStudents();toast('تم حفظ المتابعة ✨');
+}
+async function recordAttendance(studentId,status){
+  const {error}=await supabaseClient.from('attendance').insert({
+    user_id:userId,student_id:studentId,attendance_date:localDateKey(new Date()),status
+  });
+  if(error){toast('تعذر تسجيل الحضور: '+friendlyAuthError(error));return}
+  await loadAttendance();toast(`تم تسجيل الحالة: ${status}`);student(studentId);
+}
+function newStudent(){
+  document.getElementById('modalBox').innerHTML=`
+    <h2>إضافة مخدوم</h2>
+    <div class="field"><label>الاسم</label><input id="studentName" required></div><br>
+    <div class="field"><label>المرحلة العمرية</label><select id="studentAge">
+      <option>ابتدائي</option><option>إعدادي</option><option>ثانوي</option><option>شباب</option>
+    </select></div><br>
+    <div class="field"><label>الاحتياج الحالي</label><input id="studentNeed" placeholder="اختياري"></div><br>
+    <div class="field"><label>ملاحظات</label><textarea id="studentNotes" rows="4"></textarea></div><br>
+    <button class="btn" onclick="saveStudent()">إضافة</button>
+    <button class="btn secondary" onclick="closeModal()">إلغاء</button>`;
+  document.getElementById('modal').classList.add('show');
+}
+async function saveStudent(){
+  const name=document.getElementById('studentName').value.trim();
+  if(!name){toast('اكتب اسم المخدوم أولًا');return}
+  const {error}=await supabaseClient.from('students').insert({
+    user_id:userId,full_name:name,age_group:document.getElementById('studentAge').value,
+    current_need:document.getElementById('studentNeed').value.trim(),
+    notes:document.getElementById('studentNotes').value.trim()
+  });
+  if(error){toast('تعذر إضافة المخدوم: '+friendlyAuthError(error));return}
+  await loadStudents();closeModal();renderStudents();renderDashboard();toast('تمت إضافة المخدوم ✨');
+}
+
+/* =========================
+   NETWORK — only data that the current RLS actually allows
+   ========================= */
+function renderNetwork(){
+  const shared=lessons.filter(x=>x.is_shared);
+  const cards=document.querySelector('#network .grid');
+  if(!cards)return;
+  cards.innerHTML=shared.length?shared.map(x=>`
+    <div class="card"><div class="person"><div class="mini">✦</div>
+      <div><b>تحضير مشترك</b><div class="muted">${escapeHtml(x.age_group||'')}</div></div></div>
+      <p><b>${escapeHtml(x.title)}</b></p><p class="muted">${escapeHtml(x.description||'')}</p>
+      <button class="btn secondary" onclick="openLesson('${escapeAttr(x.id)}')">عرض التحضير</button>
+    </div>`).join('')
+  :'<div class="card"><h3>شبكة الخدام</h3><p class="muted">لا توجد تحضيرات مشتركة متاحة حاليًا. عند مشاركة خادم لتحضيره سيظهر هنا.</p></div>';
+}
+
+/* =========================
+   CALENDAR
+   ========================= */
+let calendarDate=new Date();
+window.calendarEvents=[];
+window.calendarAvailable=true;
+async function loadCalendar(){
+  if(!supabaseClient||!currentUser)return;
+  const {data,error}=await supabaseClient.from('calendar_events').select('*').order('starts_at',{ascending:true});
+  if(error){
+    window.calendarAvailable=false;
+    window.calendarEvents=[];
+    return;
+  }
+  window.calendarAvailable=true;
+  window.calendarEvents=data||[];
+}
+function calendarKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function renderCalendar(){
+  const grid=document.getElementById('calendarGrid'), title=document.getElementById('calendarTitle'); if(!grid||!title)return;
+  const y=calendarDate.getFullYear(), m=calendarDate.getMonth();
+  title.textContent=calendarDate.toLocaleDateString(document.documentElement.lang==='ar'?'ar-EG':'en-US',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1), start=(first.getDay()+6)%7, days=new Date(y,m+1,0).getDate();
+  const names=document.documentElement.lang==='ar'?['الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت','الأحد']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let html=names.map(n=>`<div class="calendar-head">${n}</div>`).join('');
+  for(let i=0;i<start;i++) html+='<div class="calendar-day muted-day"></div>';
+  const today=calendarKey(new Date());
+  for(let d=1;d<=days;d++){
+    const key=calendarKey(new Date(y,m,d)); const events=(window.calendarEvents||[]).filter(e=>calendarKey(new Date(e.starts_at))===key);
+    html+=`<div class="calendar-day ${key===today?'today':''}" onclick="calendarDayClick('${key}')"><div class="calendar-date">${d}</div>${events.map(e=>`<div class="calendar-event"><b>${escapeHtml(e.title)}</b><small>${new Date(e.starts_at).toLocaleTimeString(document.documentElement.lang==='ar'?'ar-EG':'en-US',{hour:'numeric',minute:'2-digit'})}</small></div>`).join('')}</div>`;
+  }
+  grid.innerHTML=html;
+  const upcoming=(window.calendarEvents||[]).filter(e=>new Date(e.starts_at)>=new Date()).slice(0,10);
+  const box=document.getElementById('upcomingEvents'); box.innerHTML=upcoming.length?upcoming.map(e=>`<div class="person"><div class="mini">📅</div><div style="flex:1"><b>${escapeHtml(e.title)}</b><div class="muted">${new Date(e.starts_at).toLocaleString(document.documentElement.lang==='ar'?'ar-EG':'en-US')}</div>${e.description?`<div class="muted">${escapeHtml(e.description)}</div>`:''}</div>${isLeader()?`<button class="btn secondary" onclick="deleteCalendarEvent('${escapeAttr(e.id)}')">Delete</button>`:''}</div>`).join(''):'<div class="muted">No upcoming events.</div>';
+  const add=document.getElementById('calendarAddBtn'); if(add)add.style.display=isLeader()?'':'none';
+}
+function calendarPrevMonth(){calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()-1,1);renderCalendar()}
+function calendarNextMonth(){calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()+1,1);renderCalendar()}
+function calendarDayClick(key){if(isLeader())newCalendarEvent(key);}
+function newCalendarEvent(dateKey=''){
+  if(!isLeader()){toast(document.documentElement.lang==='ar'?'القادة فقط يمكنهم إضافة أحداث للتقويم':'Only leaders can add calendar events');return}
+  const ar=document.documentElement.lang==='ar'; document.getElementById('modalBox').innerHTML=`<h2>${ar?'إضافة حدث في التقويم':'Add Calendar Event'} 📅</h2><div class="field"><label>${ar?'العنوان':'Title'}</label><input id="eventTitle" required placeholder="${ar?'نادي كشفي':'Scout Club'}"></div><br><div class="field"><label>${ar?'التاريخ':'Date'}</label><input id="eventDate" type="date" value="${dateKey||calendarKey(calendarDate)}"></div><br><div class="field"><label>${ar?'الوقت':'Time'}</label><input id="eventTime" type="time" value="18:00"></div><br><div class="field"><label>${ar?'الوصف':'Description'}</label><textarea id="eventDescription" rows="3"></textarea></div><br><button class="btn" onclick="saveCalendarEvent()">${ar?'حفظ الحدث':'Save Event'}</button> <button class="btn secondary" onclick="closeModal()">${ar?'إلغاء':'Cancel'}</button>`;
+  document.getElementById('modal').classList.add('show');
+}
+async function saveCalendarEvent(){
+  if(!isLeader())return;
+  const date=document.getElementById('eventDate').value,time=document.getElementById('eventTime').value;
+  if(!date||!time||!document.getElementById('eventTitle').value.trim()){toast('Please complete the event details');return}
+  const {error}=await supabaseClient.from('calendar_events').insert({created_by:userId,title:document.getElementById('eventTitle').value.trim(),description:document.getElementById('eventDescription').value.trim(),starts_at:`${date}T${time}:00`});
+  if(error){toast('Could not save event: '+friendlyAuthError(error));return}
+  await loadCalendar();closeModal();renderCalendar();toast(document.documentElement.lang==='ar'?'تمت إضافة الحدث ✨':'Event added ✨');
+}
+async function deleteCalendarEvent(id){
+  if(!isLeader())return;
+  if(!confirm(document.documentElement.lang==='ar'?'حذف هذا الحدث؟':'Delete this event?'))return;
+  const {error}=await supabaseClient.from('calendar_events').delete().eq('id',id); if(error){toast('Could not delete event: '+friendlyAuthError(error));return}
+  await loadCalendar();renderCalendar();toast(document.documentElement.lang==='ar'?'تم حذف الحدث':'Event deleted');
+}
+
+/* =========================
+   ACCOUNT + QR
+   ========================= */
+function renderAccount(){
+  const safe=account||{};
+  document.getElementById('accountName').textContent=safe.name||'مستخدم مِرْسَال';
+  document.getElementById('infoName').textContent=safe.name||'—';
+  document.getElementById('infoType').textContent=roleLabel(safe.type)||'—';
+  document.getElementById('infoAge').textContent=safe.age||'—';
+  document.getElementById('infoChurch').textContent=safe.church||'—';
+  document.getElementById('infoService').textContent=safe.service||'—';
+  document.getElementById('infoEmail').textContent=safe.email||currentUser?.email||'—';
+  document.getElementById('accountType').textContent=roleLabel(safe.type);
+  const initial=(safe.name||'م').trim().charAt(0)||'م';
+  document.getElementById('accountAvatar').textContent=initial;
+  document.getElementById('topAvatar').textContent=initial;
+  document.getElementById('qrUserId').textContent=userId||'—';
+  document.getElementById('dashboardWelcome').textContent=`أهلًا يا ${safe.name||roleLabel(safe.type)} 👋`;
+  if(userId)generateQR();
+}
+function generateQR(){
+  const box=document.getElementById('qrcode');if(!box||!userId)return;
+  box.innerHTML='';
+  const qrData=JSON.stringify({app:'MERSAL',type:'attendance-user',userId:userId});
+  if(typeof QRCode==='undefined'){box.innerHTML='<div class="bible-error">مكتبة QR لم يتم تحميلها.</div>';return}
+  new QRCode(box,{text:qrData,width:220,height:220,colorDark:'#173b31',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+}
+function refreshQR(){generateQR();toast('تم تحديث كود الـQR');}
+function copyQRId(){navigator.clipboard?.writeText(userId);toast('تم نسخ معرّف المستخدم')}
+function downloadQR(){
+  const box=document.getElementById('qrcode'),canvas=box.querySelector('canvas'),img=box.querySelector('img');
+  const link=document.createElement('a');link.download=`Mersal-QR-${userId}.png`;
+  if(canvas){link.href=canvas.toDataURL('image/png');link.click();toast('تم تحميل كود الـQR 📱');return}
+  if(img){link.href=img.src;link.click();toast('تم تحميل كود الـQR 📱');return}
+  toast('لم يتم إنشاء QR بعد');
+}
+function openEditAccount(){
+  document.getElementById('modalBox').innerHTML=`
+    <h2>تعديل بياناتي 👤</h2>
+    <div class="field"><label>الاسم</label><input id="editName" value="${escapeAttr(account.name||'')}"></div><br>
+    <div class="field"><label>نوع الحساب</label><select id="editType"><option value="leader" ${normalizeRole(account.type)==='leader'?'selected':''}>قائد</option><option value="scout" ${normalizeRole(account.type)==='scout'?'selected':''}>كشاف</option></select></div><br>
+    <div class="field"><label>المرحلة العمرية</label><select id="editAge">${['ابتدائي','إعدادي','ثانوي','شباب'].map(a=>`<option ${account.age===a?'selected':''}>${a}</option>`).join('')}</select></div><br>
+    <div class="field"><label>الكنيسة</label><input id="editChurch" value="${escapeAttr(account.church||'')}"></div><br>
+    <div class="field"><label>الخدمة</label><input id="editService" value="${escapeAttr(account.service||'')}"></div><br>
+    <div class="field"><label>البريد الإلكتروني</label><input type="email" value="${escapeAttr(currentUser?.email||'')}" disabled></div><br>
+    <button class="btn" onclick="saveAccount()">حفظ البيانات</button>
+    <button class="btn secondary" onclick="closeModal()">إلغاء</button>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function escapeAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function toast(msg){
+  const x=document.getElementById('toast');x.textContent=msg;x.classList.add('show');
+  setTimeout(()=>x.classList.remove('show'),2400);
+}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+
+/* Small compatibility helpers for dashboard markup. */
+document.addEventListener('DOMContentLoaded',()=>{
+  const prep=document.getElementById('prepCount');
+  const studentsBox=document.querySelector('#students .topbar');
+  if(prep)prep.textContent='0';
+  if(studentsBox){
+    const stat=document.createElement('span');stat.id='studentCount';stat.style.display='none';studentsBox.appendChild(stat);
+  }
+  const cards=document.querySelectorAll('#dashboard .stats .card strong');
+  if(cards[1])cards[1].id='dashboardStreak';
+  if(cards[3])cards[3].id='dashboardStudentCount';
+  const spCards=document.querySelectorAll('#spiritual .stats .card strong');
+  if(spCards[0])spCards[0].id='spiritualStreak';
+  if(spCards[1])spCards[1].id='spiritualMonthCount';
+  if(spCards[2])spCards[2].id='prayerCount';
+  if(spCards[3])spCards[3].id='reflectionCount';
+  const progress=document.querySelector('#dashboard .progress>div');
+  if(progress)progress.id='weeklyProgress';
+  const progressText=document.querySelector('#dashboard .progress')?.nextElementSibling;
+  if(progressText)progressText.id='weeklyProgressText';
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderLessons();initBible();renderStudents();renderChart();
+});
+</script>
+
+<script>
+/* =========================
+   MERSAL v2 — roles, community, spiritual checklist, scanner
+   ========================= */
+let scannerInstance=null;
+let scannerRunning=false;
+let pendingStudentLinkId=null;
+const SPIRITUAL_TYPES=[
+  ['صلاة','الصلاة الشخصية'],['قراءة','قراءة الكتاب المقدس'],['تأمل','تأمل وكتابة'],
+  ['حضور_قداس','حضرت القداس'],['تناول','تناولت'],['خدمة','خدمة / عطية']
+];
+
+function isServant(){return isLeader()}
+function isServed(){return !isLeader()}
+function applyRoleUI(){
+  const servant=isServant();
+  document.getElementById('navStudents')?.classList.toggle('hide',!servant);
+  document.getElementById('navAttendance')?.classList.toggle('hide',!servant);
+  const dashStudent=document.getElementById('dashboardStudentCount')?.closest('.card');
+  if(dashStudent) dashStudent.classList.toggle('hide',!servant);
+  const reminder=document.getElementById('serviceReminder')?.closest('.card');
+  if(reminder) reminder.classList.toggle('hide',!servant);
+  const prepNav=document.querySelector('.nav button[onclick*="prep"]');
+  if(prepNav) prepNav.classList.toggle('hide',!servant);
+  const prepSection=document.getElementById('prep'); if(prepSection) prepSection.classList.toggle('hide',!servant);
+  const att=document.getElementById('attendance'); if(att) att.classList.toggle('hide',!servant);
+  const students=document.getElementById('students'); if(students) students.classList.toggle('hide',!servant);
+  const prepCreate=document.querySelector('#prep .topbar .btn'); if(prepCreate) prepCreate.classList.toggle('hide',!servant);
+  const welcome=document.getElementById('dashboardWelcome');
+  if(welcome) welcome.textContent=`أهلًا يا ${account?.name|| (servant?'خادم':'مخدوم')} 👋`;
+}
+
+const _loadAllData=loadAllData;
+loadAllData=async function(){
+  await _loadAllData();
+  applyRoleUI();
+  await loadCommunity();
+  renderSpiritualChecklist();
+  renderAttendanceDashboard();
+};
+const _renderAccount=renderAccount;
+renderAccount=function(){_renderAccount();applyRoleUI()};
+
+const _show=show;
+show=function(id,btn){
+  if((id==='students'||id==='attendance'||id==='prep') && !isServant()){toast('هذا القسم متاح للقائد فقط');return}
+  _show(id,btn);
+  if(id==='network') loadCommunity();
+  if(id==='spiritual') {renderSpiritualChecklist();renderChart()}
+  if(id==='attendance') renderAttendanceDashboard();
+};
+
+/* Bible: single-tap verse selection with optional multi-verse range. */
+let selectedBibleIndices=[];
+function renderBibleVerses(arr){
+  const lang=document.getElementById('bibleLang').value,book=currentBibleBook;
+  document.getElementById('verseList').innerHTML=`<div class="bible-chapter">${arr.map((v,i)=>{
+    const n=String(v.number??v.verse??''), text=v.text||v.content||'';
+    const originalIndex=currentBibleVerses.findIndex(x=>String(x.number??x.verse??'')===n);
+    return `<div class="bible-verse selectable-verse ${lang==='en'?'en':''}" data-index="${originalIndex}" data-verse="${escapeAttr(n)}" onclick="tapBibleVerse(${originalIndex})"><span class="num">${escapeHtml(n)}</span><span class="verse-text">${escapeHtml(text)}</span></div>`;
+  }).join('')}</div>`;
+  applyBibleSelectionUI();
+}
+function tapBibleVerse(index){
+  if(index<0 || !currentBibleVerses[index])return;
+  if(selectedBibleIndices.length===0){
+    selectedBibleIndices=[index];
+  }else if(selectedBibleIndices.length===1 && selectedBibleIndices[0]!==index){
+    const a=selectedBibleIndices[0], b=index, lo=Math.min(a,b), hi=Math.max(a,b);
+    selectedBibleIndices=Array.from({length:hi-lo+1},(_,k)=>lo+k);
+  }else if(selectedBibleIndices.includes(index)){
+    selectedBibleIndices=selectedBibleIndices.filter(i=>i!==index);
+  }else{
+    const all=[...selectedBibleIndices,index].sort((a,b)=>a-b);
+    const lo=all[0],hi=all[all.length-1];
+    selectedBibleIndices=Array.from({length:hi-lo+1},(_,k)=>lo+k);
+  }
+  applyBibleSelectionUI();
+}
+function applyBibleSelectionUI(){
+  document.querySelectorAll('.selectable-verse').forEach(el=>el.classList.toggle('selected',selectedBibleIndices.includes(Number(el.dataset.index))));
+  document.getElementById('bibleActionBar')?.classList.toggle('show',selectedBibleIndices.length>0);
+}
+function getSelectedBibleData(){
+  const items=selectedBibleIndices.map(i=>currentBibleVerses[i]).filter(Boolean);
+  if(!items.length)return null;
+  const lang=document.getElementById('bibleLang').value, book=currentBibleBook, chapter=document.getElementById('bibleChapter').value;
+  const nums=items.map(v=>Number(v.number??v.verse??0)).filter(Boolean).sort((a,b)=>a-b);
+  const text=items.map(v=>v.text||v.content||'').join('\n');
+  const ref=`${lang==='ar'?book[1]:book[2]} ${chapter}:${nums.length===1?nums[0]:`${nums[0]}-${nums[nums.length-1]}`}`;
+  return {text,ref};
+}
+function clearBibleSelection(){selectedBibleIndices=[];applyBibleSelectionUI()}
+function copySelectedVerse(){const d=getSelectedBibleData();if(!d)return;copyBibleVerse(d.text)}
+function reflectSelectedVerse(){const d=getSelectedBibleData();if(d)saveNote(d.ref)}
+function filterBibleVerses(){
+  const q=(document.getElementById('verseSearch').value||'').trim().toLowerCase();
+  if(!q){renderBibleVerses(currentBibleVerses);return}
+  renderBibleVerses(currentBibleVerses.filter(v=>String(v.number??v.verse??'').includes(q)||(v.text||v.content||'').toLowerCase().includes(q)));
+}
+function copyBibleVerse(text){
+  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(text);
+  else{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
+  toast('تم نسخ الآية');
+}
+
+/* Spiritual notebook */
+function renderSpiritualChecklist(){
+  const box=document.getElementById('spiritualChecklist'); if(!box)return;
+  const today=localDateKey(new Date());
+  const items=window.spiritualActivities||[];
+  const todayTypes=new Set(items.filter(x=>x.activity_date===today).map(x=>x.activity_type));
+  const label=document.getElementById('spiritualTodayLabel'); if(label)label.textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  box.innerHTML=SPIRITUAL_TYPES.map(([type,label])=>{
+    const checked=todayTypes.has(type);
+    return `<label class="spiritual-item"><input type="checkbox" ${checked?'checked':''} onchange="toggleSpiritual('${type}',this.checked)"><span><b>${label}</b><small>${checked?'تم تسجيله اليوم':'اضغط للتسجيل'}</small></span></label>`;
+  }).join('');
+}
+async function toggleSpiritual(type,checked){
+  const today=localDateKey(new Date());
+  if(checked){
+    const {error}=await supabaseClient.from('spiritual_activities').insert({user_id:userId,activity_type:type,activity_date:today,notes:''});
+    if(error){toast('تعذر حفظ النشاط: '+friendlyAuthError(error));renderSpiritualChecklist();return}
+  }else{
+    const {error}=await supabaseClient.from('spiritual_activities').delete().eq('user_id',userId).eq('activity_type',type).eq('activity_date',today);
+    if(error){toast('تعذر تعديل النشاط: '+friendlyAuthError(error));renderSpiritualChecklist();return}
+  }
+  await loadSpiritual();renderSpiritualChecklist();renderChart();
+}
+
+/* Community */
+async function loadCommunity(){
+  if(!supabaseClient||!currentUser)return;
+  const {data,error}=await supabaseClient.from('posts').select('*').order('created_at',{ascending:false}).limit(50);
+  if(error){const el=document.getElementById('communityFeed');if(el)el.innerHTML=`<div class="card"><p class="muted">تعذر تحميل المجتمع. لو لم تُشغّل SQL الخاص بالمجتمع بعد، شغّله أولًا.</p></div>`;return}
+  window.communityPosts=data||[];
+  renderCommunity();
+}
+function openNewPost(){document.getElementById('postComposer')?.classList.remove('hide');document.getElementById('newPostText')?.focus()}
+function closePostComposer(){document.getElementById('postComposer')?.classList.add('hide');if(document.getElementById('newPostText'))document.getElementById('newPostText').value=''}
+async function createPost(){
+  const content=(document.getElementById('newPostText')?.value||'').trim();
+  if(!content){toast('اكتب المنشور أولًا');return}
+  const {error}=await supabaseClient.from('posts').insert({author_id:userId,content});
+  if(error){toast('تعذر نشر المنشور: '+friendlyAuthError(error));return}
+  closePostComposer();await loadCommunity();toast('تم نشر المنشور ✨');
+}
+async function likePost(postId){
+  const {data}=await supabaseClient.from('post_likes').select('post_id').eq('post_id',postId).eq('user_id',userId).maybeSingle();
+  if(data) await supabaseClient.from('post_likes').delete().eq('post_id',postId).eq('user_id',userId);
+  else await supabaseClient.from('post_likes').insert({post_id:postId,user_id:userId});
+  renderCommunity();
+}
+async function deletePost(postId){
+  const post=(window.communityPosts||[]).find(p=>p.id===postId);
+  if(!post || post.author_id!==userId){toast('يمكنك حذف منشوراتك أنت فقط');return}
+  if(!confirm(document.documentElement.lang==='ar'?'هل تريد حذف هذا المنشور؟':'Delete this post?'))return;
+  const {error}=await supabaseClient.from('posts').delete().eq('id',postId).eq('author_id',userId);
+  if(error){toast('تعذر حذف المنشور: '+friendlyAuthError(error));return}
+  await loadCommunity();toast(document.documentElement.lang==='ar'?'تم حذف المنشور':'Post deleted');
+}
+async function addComment(postId){
+  const input=document.getElementById('comment-'+postId);const content=(input?.value||'').trim();if(!content)return;
+  const {error}=await supabaseClient.from('post_comments').insert({post_id:postId,author_id:userId,content});
+  if(error){toast('تعذر إضافة التعليق: '+friendlyAuthError(error));return} input.value='';await renderCommunity();
+}
+async function renderCommunity(){
+  const feed=document.getElementById('communityFeed');if(!feed)return;
+  const posts=window.communityPosts||[];
+  if(!posts.length){feed.innerHTML='<div class="card"><h3>المجتمع لسه مستني أول مشاركة ✨</h3><p class="muted">ابدأ بأول منشور من زر «منشور جديد».</p></div>';return}
+  let likes=[],comments=[];
+  try{
+    const ids=posts.map(p=>p.id); if(ids.length){
+      const [l,c]=await Promise.all([supabaseClient.from('post_likes').select('*').in('post_id',ids),supabaseClient.from('post_comments').select('*').in('post_id',ids).order('created_at',{ascending:true})]);
+      likes=l.data||[];comments=c.data||[];
+    }
+  }catch(e){}
+  feed.innerHTML=posts.map(p=>{
+    const pl=likes.filter(x=>x.post_id===p.id), pc=comments.filter(x=>x.post_id===p.id);
+    const liked=pl.some(x=>x.user_id===userId);
+    return `<div class="card post"><div class="post-head"><div class="person" style="border:0;padding:0"><div class="mini">${escapeHtml((p.author_name||'م')[0])}</div><div><b>${escapeHtml(p.author_name||'مستخدم مِرْسَال')}</b><div class="muted">${formatLastUpdate(p.created_at)}</div></div></div>${p.author_id===userId?`<button class="btn secondary" onclick="deletePost('${p.id}')">حذف</button>`:''}</div><p style="white-space:pre-wrap;line-height:1.8">${escapeHtml(p.content||'')}</p><div class="post-actions"><button class="btn ${liked?'gold':'secondary'}" onclick="likePost('${p.id}')">${liked?'❤️':'♡'} ${pl.length}</button><span class="muted">💬 ${pc.length}</span></div>${pc.map(c=>`<div class="comment"><b>${escapeHtml(c.author_name||'مستخدم')}</b> ${escapeHtml(c.content)}</div>`).join('')}<div class="comment-box"><input id="comment-${p.id}" placeholder="اكتب تعليقًا..."><button class="btn secondary" onclick="addComment('${p.id}')">إرسال</button></div></div>`;
+  }).join('');
+}
+
+/* Scanner */
+async function startLinkStudentQR(studentId){
+  if(!isLeader())return;
+  pendingStudentLinkId=studentId;
+  closeModal();
+  const nav=document.getElementById('navAttendance');
+  show('attendance',nav);
+  toast('امسح QR الخاص بالمخدوم لربطه بملفه');
+  await startScanner();
+}
+
+async function startScanner(){
+  if(!isLeader()){toast('The scanner is available to leaders only');return}
+  if(scannerRunning)return;
+  if(typeof Html5Qrcode==='undefined'){toast('QR Scanner library failed to load');return}
+  const reader=document.getElementById('qr-reader');
+  if(!reader){toast('Scanner area not found');return}
+  if(!window.isSecureContext && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
+    document.getElementById('scannerStatus').textContent='Camera scanning requires HTTPS. Open the published HTTPS site and allow camera access.';
+    toast('Camera scanning requires HTTPS');
+    return;
+  }
+  try{
+    if(scannerInstance){try{await scannerInstance.clear()}catch(e){}}
+    scannerInstance=new Html5Qrcode('qr-reader');
+    const cameras=await Html5Qrcode.getCameras();
+    if(!cameras?.length) throw new Error('No camera found');
+    const preferred=cameras.find(c=>/back|rear|environment/i.test(c.label))||cameras[0];
+    await scannerInstance.start(
+      preferred.id,
+      {fps:10,qrbox:{width:250,height:250},aspectRatio:1.0},
+      onQrSuccess,
+      ()=>{}
+    );
+    scannerRunning=true;
+    document.getElementById('scannerStatus').textContent='Point the camera at the student QR code...';
+  }catch(e){
+    scannerRunning=false;
+    try{await scannerInstance?.clear()}catch(_){}
+    scannerInstance=null;
+    document.getElementById('scannerStatus').textContent='Could not start the camera. Allow camera access and use the HTTPS version of the site.';
+    toast('Camera could not start. Check HTTPS and camera permission.');
+  }
+}
+async function stopScanner(){
+  if(scannerInstance){
+    try{if(scannerRunning) await scannerInstance.stop()}catch(e){}
+    try{await scannerInstance.clear()}catch(e){}
+  }
+  scannerRunning=false;scannerInstance=null;
+  const s=document.getElementById('scannerStatus');if(s)s.textContent='Scanner stopped.';
+}
+async function scanQrImage(file){
+  if(!file)return;
+  if(typeof Html5Qrcode==='undefined'){toast('QR Scanner library failed to load');return}
+  const reader=document.getElementById('qr-reader');
+  try{
+    const scanner=new Html5Qrcode('qr-reader');
+    const decoded=await scanner.scanFile(file,true);
+    try{await scanner.clear()}catch(_){}
+    await onQrSuccess(decoded);
+  }catch(e){
+    toast('Could not read a QR code from that image.');
+    document.getElementById('scannerStatus').textContent='No readable QR code found in the selected image.';
+  }
+}
+async function renderAttendanceDashboard(){
+  if(!isServant())return;
+  const summary=document.getElementById('attendanceSummary');const list=document.getElementById('attendanceTodayList');if(!summary)return;
+  const today=localDateKey(new Date());const records=(window.attendanceRecords||[]).filter(x=>x.attendance_date===today);
+  summary.innerHTML=`<b>${records.length}</b> تسجيل حضور اليوم من أصل <b>${students.length}</b> مخدوم`;
+  list.innerHTML=records.map(r=>{const st=students.find(s=>s.id===r.student_id);return `<div class="person"><div class="mini">${escapeHtml((st?.full_name||'?')[0])}</div><div><b>${escapeHtml(st?.full_name||'مخدوم')}</b><div class="muted">${escapeHtml(r.status||'حاضر')}</div></div></div>`}).join('')||'<p class="muted">لا يوجد حضور مسجل اليوم بعد.</p>';
+}
+
+/* Give community author display names without requiring a new join in every query. */
+const _loadCommunityOriginal=loadCommunity;
+loadCommunity=async function(){
+  if(!supabaseClient||!currentUser)return;
+  const {data,error}=await supabaseClient.from('posts').select('*').order('created_at',{ascending:false}).limit(50);
+  if(error){const el=document.getElementById('communityFeed');if(el)el.innerHTML='<div class="card"><p class="muted">شغّل SQL الخاص بالمجتمع ثم أعد تحميل الصفحة.</p></div>';return}
+  window.communityPosts=data||[];
+  renderCommunity();
+};
+
+/* Keep original post UI robust if author_name is not populated. */
+applyRoleUI();
+</script>
+
+<script>
+/* Secure role-aware login: the database profile is authoritative. */
+const _loginOriginal=login;
+login=async function(event){
+  event.preventDefault();
+  const selected=document.getElementById('loginRole')?.value||'خادم';
+  await _loginOriginal(event);
+  if(currentUser && account?.type && normalizeRole(account.type)!==normalizeRole(selected)){
+    await supabaseClient.auth.signOut(); currentUser=null; userId='';
+    showAuthScreen();
+    setAuthMessage('error',`نوع الحساب المختار (${selected}) لا يطابق نوع الحساب المسجل لهذا البريد.`);
+  }
+};
+/* Robust login: do not let a secondary data-table error make a successful sign-in look like a failed login. */
+login=async function(event){
+  event.preventDefault();
+  if(!supabaseClient){setAuthMessage('error','تعذر تشغيل Supabase.');return}
+  const form=event.currentTarget;
+  const btn=form?.querySelector('button[type=submit]');
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const selected=document.getElementById('loginRole')?.value||'leader';
+  if(!email||!password){setAuthMessage('error',document.documentElement.lang==='ar'?'اكتب البريد الإلكتروني وكلمة المرور أولًا.':'Enter your email and password first.');return}
+  if(btn){btn.disabled=true;btn.textContent=document.documentElement.lang==='ar'?'جاري الدخول...':'Signing in...'}
+  setAuthMessage('','');
+  try{
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+    if(error)throw error;
+    currentUser=data.user;
+    await loadProfile();
+    if(normalizeRole(account.type)!==normalizeRole(selected)){
+      await supabaseClient.auth.signOut(); currentUser=null; userId='';
+      showAuthScreen();
+      setAuthMessage('error',document.documentElement.lang==='ar'?`نوع الحساب المختار (${roleLabel(selected)}) لا يطابق نوع الحساب المسجل لهذا البريد.`:`The selected account type (${roleLabel(selected)}) does not match this account.`);
+      return;
+    }
+    hideAuthScreen();
+    try{await loadAllData()}catch(dataError){
+      console.error('MERSAL data load error after login',dataError);
+      toast(document.documentElement.lang==='ar'?'تم تسجيل الدخول، لكن بعض البيانات تحتاج إعداد قاعدة البيانات.':'Signed in, but some data still needs database setup.');
+    }
+    applyRoleUI();
+    renderAccount();
+  }catch(error){
+    showAuthScreen();
+    setAuthMessage('error',friendlyAuthError(error));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=document.documentElement.lang==='ar'?'تسجيل الدخول':'Sign In'}
+  }
+};
+
+openEditAccount=function(){
+  document.getElementById('modalBox').innerHTML=`
+    <h2>تعديل بياناتي 👤</h2>
+    <div class="field"><label>الاسم</label><input id="editName" value="${escapeAttr(account.name||'')}"></div><br>
+    <div class="field"><label>نوع الحساب</label><input value="${escapeAttr(account.type||'')}" disabled></div><br>
+    <div class="field"><label>المرحلة العمرية</label><select id="editAge">${['ابتدائي','إعدادي','ثانوي','شباب'].map(a=>`<option ${account.age===a?'selected':''}>${a}</option>`).join('')}</select></div><br>
+    <div class="field"><label>الكنيسة</label><input id="editChurch" value="${escapeAttr(account.church||'')}"></div><br>
+    <div class="field"><label>الخدمة</label><input id="editService" value="${escapeAttr(account.service||'')}"></div><br>
+    <div class="field"><label>البريد الإلكتروني</label><input type="email" value="${escapeAttr(currentUser?.email||'')}" disabled></div><br>
+    <button class="btn" onclick="saveAccount()">حفظ البيانات</button>
+    <button class="btn secondary" onclick="closeModal()">إلغاء</button>`;
+  document.getElementById('modal').classList.add('show');
+};
+saveAccount=async function(){
+  if(!currentUser){showAuthScreen();return}
+  const next={name:document.getElementById('editName').value.trim()||'مستخدم مِرْسَال',type:account.type,age:document.getElementById('editAge').value,church:document.getElementById('editChurch').value.trim(),service:document.getElementById('editService').value.trim(),email:currentUser.email||''};
+  try{await saveProfile(next);closeModal();renderAccount();toast('تم حفظ البيانات ✨')}catch(error){toast('تعذر حفظ البيانات: '+friendlyAuthError(error))}
+};
+</script>
+
+<script>
+/* =========================================================
+   MERSAL — English UI layer
+   Bible content remains bilingual/unchanged.
+   ========================================================= */
+(function(){
+  const T = {
+    "منصة الخادم — سجّل دخولك للوصول إلى حسابك":"Servant Platform — Sign in to access your account",
+    "تسجيل الدخول":"Sign In","إنشاء حساب":"Create Account","البريد الإلكتروني":"Email",
+    "كلمة المرور":"Password","نوع الحساب":"Account Type","دخول":"Sign In","الاسم":"Name",
+    "اسمك بالكامل":"Full name","6 أحرف أو أكثر":"6 characters or more","أنا":"I am",
+    "المرحلة العمرية":"Age Group","ابتدائي":"Primary","إعدادي":"Preparatory","ثانوي":"Secondary","شباب":"Youth",
+    "يتم حفظ بيانات الحساب في Supabase. لا تضع داخل هذا الملف أي مفتاح Secret أو service_role.":"Account data is stored in Supabase. Never put a Secret or service_role key in this file.",
+    "الرئيسية":"Home","مستر التحضير":"Lesson Planner","الكتاب المقدس":"Bible","حياتي الروحية":"Spiritual Life",
+    "شبكة الخدام":"Community","المخدومين":"Students","الحضور والـQR":"Attendance & QR","حسابي":"My Account",
+    "صباح الخير يا خادم 👋":"Good morning 👋","أهلًا يا":"Welcome, ","خلّي كلمتك جاهزة… وخلّي قلبك جاهز أكتر.":"Keep your message ready… and your heart even more ready.",
+    "تحضيراتك":"My Lessons","آيات محفوظة":"Saved Verses","مخدومين":"Students","كمّل من حيث توقفت":"Continue where you left off",
+    "كل التحضيرات":"All Lessons","جاري تحميل تحضيراتك...":"Loading your lessons...",
+    "آية اليوم":"Verse of the Day","أضف تأمل ✦":"Add Reflection ✦","رحلتك الروحية هذا الأسبوع":"Your Spiritual Journey This Week",
+    "72% من هدفك الأسبوعي":"72% of your weekly goal","متابعة التقدم":"Track Progress","+ نشاط روحي":"+ Spiritual Activity",
+    "تذكير للخدمة":"Service Reminder","جاري حساب المتابعة...":"Calculating follow-up...",
+    "متابعة المخدومين":"Follow Up Students","+ تحضير جديد":"+ New Lesson","حضّر أسرع، شارك، وابحث في تحضيرات الخدام.":"Prepare faster, share, and discover lessons from servants.",
+    "ابحث عن Topic مثل: الصلاة، المحبة، الغفران...":"Search for a topic, e.g. prayer, love, forgiveness...",
+    "بحث":"Search","كل الأعمار":"All Ages","محتوى مقترح • 18 دقيقة":"Suggested content • 18 min",
+    "تأمل روحي • 11 دقيقة":"Spiritual reflection • 11 min","حفظ":"Save","أسئلة افتتاحية":"Opening Questions",
+    "أفكار نشاط":"Activity Ideas","تم توليد مجموعة أسئلة افتتاحية":"Opening questions generated",
+    "تم حفظ أفكار النشاط":"Activity ideas saved","الكتاب المقدس كاملًا بالعربية والإنجليزية — فان دايك وKing James Version.":"The complete Bible in Arabic and English — Van Dyke and King James Version.",
+    "اللغة / الترجمة":"Language / Translation","السفر":"Book","الإصحاح":"Chapter",
+    "ابحث داخل الإصحاح عن كلمة أو رقم آية...":"Search this chapter by word or verse number...",
+    "جاري تحميل الكتاب المقدس...":"Loading Bible...","حياتي الروحية ♡":"Spiritual Life ♡",
+    "سجّل خطواتك الروحية اليومية وتابع استمراريتك.":"Track your daily spiritual steps and consistency.",
+    "Streak الحالي":"Current Streak","هذا الشهر":"This Month","صلوات مسجلة":"Prayers Logged","تأملات":"Reflections",
+    "دفتر اليوم":"Today's Journal","كل علامة = نشاط حقيقي":"Every check = a real activity",
+    "التقدم الأسبوعي":"Weekly Progress","الـStreak يتحسب عند وجود نشاط روحي واحد على الأقل في اليوم، وليس بمجرد فتح الموقع.":"Your streak counts when you complete at least one spiritual activity in a day, not simply when you open the website.",
+    "المجتمع ◎":"Community ◎","شارك، شجّع، وصلّي مع مجتمع مِرْسَال.":"Share, encourage, and pray with the MERSAL community.",
+    "+ منشور جديد":"+ New Post","منشور جديد":"New Post","اكتب ما تريد مشاركته...":"Write what you want to share...",
+    "نشر":"Post","إلغاء":"Cancel","المخدومين ♙":"Students ♙","اعرف احتياجاتهم وتابع كل واحد بشكل شخصي.":"Know their needs and follow up with each student personally.",
+    "+ مخدوم جديد":"+ New Student","ابحث عن اسم المخدوم...":"Search for a student's name...",
+    "الحضور والـQR 📷":"Attendance & QR 📷","الخادم يمسح QR الخاص بالمخدوم لتسجيل حضوره.":"The servant scans the student's QR to record attendance.",
+    "اضغط بدء المسح ثم وجّه الكاميرا إلى QR المخدوم.":"Press Start Scan, then point the camera at the student's QR.",
+    "📷 بدء المسح":"📷 Start Scan","إيقاف":"Stop","حضور اليوم":"Today's Attendance","جاري التحميل...":"Loading...",
+    "بياناتك الشخصية وكود الـQR الخاص بك.":"Your personal information and your QR code.",
+    "تعديل البيانات":"Edit Details","تسجيل الخروج":"Log Out","مستخدم مِرْسَال":"MERSAL User","خادم":"Servant","مخدوم":"Student",
+    "الكنيسة":"Church","الخدمة":"Service","💡 ملاحظة مهمة":"💡 Important Note",
+    "كود الـQR ده مرتبط بمعرّف حسابك الفريد. لاحقًا نقدر نستخدمه في تسجيل الحضور بالـQR بدون الحاجة لكتابة الاسم يدويًا.":"This QR code is linked to your unique account ID. It can be used to record attendance without entering your name manually.",
+    "QR Code الخاص بي 📱":"My QR Code 📱","اعرض الكود للخادم أو جهاز تسجيل الحضور لمسحه.":"Show this code to the servant or attendance device to scan it.",
+    "معرّف المستخدم":"User ID","تحميل QR":"Download QR","نسخ المعرّف":"Copy ID","تحديث QR":"Refresh QR",
+    "حدث خطأ غير معروف":"An unknown error occurred","البريد الإلكتروني أو كلمة المرور غير صحيحة.":"Incorrect email or password.",
+    "هذا البريد الإلكتروني مسجل بالفعل. جرّب تسجيل الدخول.":"This email is already registered. Try signing in.",
+    "الحساب لم يتم تأكيد بريده الإلكتروني بعد. افتح رسالة التأكيد التي أرسلها Supabase.":"Your email has not been confirmed yet. Open the confirmation email from Supabase.",
+    "جدول profiles غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.":"The profiles table is missing. Run the MERSAL SQL first.",
+    "جدول students غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.":"The students table is missing. Run the MERSAL SQL first.",
+    "جدول lessons غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.":"The lessons table is missing. Run the MERSAL SQL first.",
+    "جدول spiritual_activities غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.":"The spiritual_activities table is missing. Run the MERSAL SQL first.",
+    "جدول notes غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.":"The notes table is missing. Run the MERSAL SQL first.",
+    "جدول attendance غير موجود. نفّذ SQL الخاص بـ Mersal أولًا.":"The attendance table is missing. Run the MERSAL SQL first.",
+    "تم رفض العملية بسبب صلاحيات قاعدة البيانات (RLS). راجع سياسات Mersal التي تم تنفيذها في Supabase.":"Database permissions (RLS) rejected the operation. Check the MERSAL policies in Supabase.",
+    "لم يتم إعداد Supabase.":"Supabase is not configured.","تم تسجيل الدخول بنجاح 👋":"Signed in successfully 👋",
+    "تم إنشاء الحساب بنجاح ✨":"Account created successfully ✨",
+    "تم إنشاء الحساب. افتح رسالة التأكيد التي وصلت إلى بريدك الإلكتروني، ثم ارجع وسجّل الدخول.":"Account created. Open the confirmation email, then return and sign in.",
+    "تم حفظ بيانات الحساب في قاعدة البيانات ✨":"Account details saved to the database ✨","تعذر حفظ البيانات: ":"Could not save details: ",
+    "تم تسجيل الخروج":"Signed out","تعذر تشغيل Supabase في هذه الصفحة. تأكد من اتصال الإنترنت.":"Could not initialize Supabase on this page. Check your internet connection.",
+    "بدون تاريخ":"No date","اليوم":"Today","منذ يوم":"Yesterday","منذ ${diff} أيام":"${diff} days ago",
+    "لا توجد تحضيرات بعد. أنشئ أول تحضير من «مستر التحضير».":"No lessons yet. Create your first lesson from Lesson Planner.",
+    "تحضير شخصي":"Personal Lesson","تحضير مشترك":"Shared Lesson","فتح":"Open","تعديل":"Edit","حذف":"Delete","إغلاق":"Close",
+    "الوصف":"Description","الهدف":"Objective","الافتتاحية":"Opening","النقاط الأساسية":"Key Points","التطبيق":"Application",
+    "تعديل التحضير ✎":"Edit Lesson ✎","تحضير جديد ✎":"New Lesson ✎","عنوان الموضوع":"Lesson Title","المدة":"Duration",
+    "15 دقيقة":"15 minutes","الآية الرئيسية":"Main Verse","مشاركة هذا التحضير مع الخدام":"Share this lesson with servants",
+    "حفظ التحضير":"Save Lesson","اكتب عنوان التحضير أولًا":"Enter a lesson title first","تم تحديث التحضير ✨":"Lesson updated ✨",
+    "تم حفظ التحضير في Supabase ✨":"Lesson saved to Supabase ✨","تعذر حفظ التحضير: ":"Could not save lesson: ",
+    "حذف هذا التحضير نهائيًا؟":"Delete this lesson permanently?","تعذر الحذف: ":"Could not delete: ","تم حذف التحضير":"Lesson deleted",
+    "+ تأمل":"+ Reflection","نسخ":"Copy","تم نسخ الآية":"Verse copied","تأمل":"Reflection","حفظ التأمل":"Save Reflection",
+    "اكتب تأملك أو ملاحظتك الخاصة...":"Write your reflection or personal note...","اكتب التأمل أولًا":"Write a reflection first",
+    "تعذر حفظ التأمل: ":"Could not save reflection: ","تم حفظ التأمل في قاعدة البيانات ✨":"Reflection saved to the database ✨",
+    "تعذر حذف التأمل":"Could not delete reflection","تم حذف التأمل":"Reflection deleted","صلاة":"Prayer","قراءة":"Reading","خدمة":"Service",
+    "تسجيل نشاط روحي ♡":"Log Spiritual Activity ♡","نوع النشاط":"Activity Type","التاريخ":"Date","ملاحظات":"Notes","اختياري":"Optional",
+    "حفظ النشاط":"Save Activity","تعذر تسجيل النشاط: ":"Could not save activity: ","تم تسجيل النشاط الروحي ✨":"Spiritual activity recorded ✨",
+    "لا يوجد مخدومون محفوظون بعد.":"No students saved yet.","لا يوجد احتياج مسجل":"No need recorded","متابعة":"Follow Up",
+    "لم يتم التواصل بعد":"No contact yet","لا يوجد حضور مسجل.":"No attendance recorded.",
+    "المرحلة:":"Age Group:","الاحتياج الحالي:":"Current Need:","آخر تواصل:":"Last Contact:",
+    "ملاحظة متابعة":"Follow-up Note","اكتب ملاحظة جديدة":"Write a new note","حفظ المتابعة":"Save Follow-up",
+    "🔗 ربط QR بالمخدوم":"🔗 Link QR to Student","حاضر":"Present","متأخر":"Late","غائب":"Absent",
+    "آخر سجلات الحضور":"Recent Attendance Records","تعذر حفظ المتابعة: ":"Could not save follow-up: ","تم حفظ المتابعة ✨":"Follow-up saved ✨",
+    "تعذر تسجيل الحضور: ":"Could not record attendance: ","تم تسجيل الحالة: ${status}":"Status recorded: ${status}",
+    "إضافة مخدوم":"Add Student","الاحتياج الحالي":"Current Need","إضافة":"Add","اكتب اسم المخدوم أولًا":"Enter the student's name first",
+    "تعذر إضافة المخدوم: ":"Could not add student: ","تمت إضافة المخدوم ✨":"Student added ✨","عرض التحضير":"View Lesson",
+    "لا توجد تحضيرات مشتركة متاحة حاليًا. عند مشاركة خادم لتحضيره سيظهر هنا.":"No shared lessons are available yet. Shared lessons will appear here.",
+    "تم تحديث كود الـQR":"QR refreshed","تم نسخ معرّف المستخدم":"User ID copied","تم تحميل كود الـQR 📱":"QR downloaded 📱","لم يتم إنشاء QR بعد":"QR has not been generated yet",
+    "تعديل بياناتي 👤":"Edit My Details 👤","حفظ البيانات":"Save Details","الصلاة الشخصية":"Personal Prayer","قراءة الكتاب المقدس":"Bible Reading",
+    "تأمل وكتابة":"Reflection & Journaling","حضرت القداس":"Attended Liturgy","تناولت":"Received Communion","خدمة / عطية":"Service / Giving",
+    "هذا القسم متاح للقائد فقط":"This section is available to servants only","تم تسجيله اليوم":"Recorded today","اضغط للتسجيل":"Click to record",
+    "تعذر تحميل المجتمع. لو لم تُشغّل SQL الخاص بالمجتمع بعد، شغّله أولًا.":"Could not load the community. If you have not run the community SQL yet, run it first.",
+    "اكتب المنشور أولًا":"Write the post first","تعذر نشر المنشور: ":"Could not publish post: ","تم نشر المنشور ✨":"Post published ✨",
+    "تعذر إضافة التعليق: ":"Could not add comment: ","المجتمع لسه مستني أول مشاركة ✨":"The community is waiting for its first post ✨",
+    "ابدأ بأول منشور من زر «منشور جديد».":"Create the first post using the New Post button.","مستخدم":"User","اكتب تعليقًا...":"Write a comment...","حذف":"Delete","هل تريد حذف هذا المنشور؟":"Delete this post?","تم حذف المنشور":"Post deleted","يمكنك حذف منشوراتك أنت فقط":"You can delete only your own posts.",
+    "إرسال":"Send","امسح QR الخاص بالمخدوم لربطه بملفه":"Scan the student's QR to link it to their profile",
+    "الـScanner متاح للخادم فقط":"The scanner is available to leaders only","مكتبة QR Scanner لم يتم تحميلها":"QR Scanner library failed to load",
+    "وجّه الكاميرا إلى QR المخدوم...":"Point the camera at the student's QR...",
+    "تعذر تشغيل الكاميرا. تأكد من HTTPS والسماح للمتصفح بالكاميرا.":"Could not start the camera. Make sure the site uses HTTPS and camera access is allowed.",
+    "تعذر ربط QR بالمخدوم: ":"Could not link QR to student: ","تم ربط QR بالمخدوم بنجاح 🔗":"Student QR linked successfully 🔗",
+    "الـQR صحيح لكن الربط بين الخادم والمخدوم غير موجود بعد.":"The QR is valid, but this servant-student link does not exist yet.",
+    "تم قراءة QR، لكن هذا المخدوم غير موجود ضمن قائمتك.":"QR scanned, but this student is not in your list.",
+    "المخدوم ليس ضمن قائمتك":"This student is not in your list","تم تسجيل حضور ":"Attendance recorded for ",
+    "لا يوجد حضور مسجل اليوم بعد.":"No attendance recorded today yet.","شغّل SQL الخاص بالمجتمع ثم أعد تحميل الصفحة.":"Run the community SQL, then reload the page.",
+    "نوع الحساب المختار (":"Selected account type (",") لا يطابق نوع الحساب المسجل لهذا البريد.":" ) does not match the account type registered for this email.",
+    "تم حفظ البيانات ✨":"Details saved ✨",
+    "ماذا تريد أن تشارك اليوم؟":"What would you like to share today?",
+    "أندرو":"Andrew"
+  };
+
+  function shouldSkip(el){
+    return el.closest('script,style,#verseList,#bibleBook') ||
+      el.closest('#bibleStatus')?.matches('#bibleStatus');
+  }
+  function translateTextNode(node){
+    const el=node.parentElement;
+    if(!el || shouldSkip(el)) return;
+    let s=node.nodeValue;
+    let out=s;
+    for(const [a,b] of Object.entries(T)){
+      if(out.includes(a)) out=out.split(a).join(b);
+    }
+    if(out!==s) node.nodeValue=out;
+  }
+  function translateAttrs(el){
+    if(el.matches('input,textarea,button,select,option')) {
+      ['placeholder','title','aria-label'].forEach(attr=>{
+        const v=el.getAttribute(attr);
+        if(!v)return;
+        let o=v;
+        for(const [a,b] of Object.entries(T)) if(o.includes(a)) o=o.split(a).join(b);
+        if(o!==v)el.setAttribute(attr,o);
+      });
+    }
+  }
+  function translate(root=document){
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[]; let n;
+    while(n=walker.nextNode()) nodes.push(n);
+    nodes.forEach(translateTextNode);
+    root.querySelectorAll?.('input,textarea,button,select,option').forEach(translateAttrs);
+  }
+  window.MERSAL_TRANSLATE=translate;
+  document.addEventListener('DOMContentLoaded',()=>{
+    translate(document);
+    const obs=new MutationObserver(muts=>muts.forEach(m=>{
+      m.addedNodes.forEach(x=>{if(x.nodeType===1)translate(x);else if(x.nodeType===3)translateTextNode(x);});
+    }));
+    obs.observe(document.body,{childList:true,subtree:true});
+  });
+})();
+
+/* =========================
+   APP LANGUAGE SETTINGS
+   ========================= */
+const APP_LANG_KEY='mersal_app_language';
+const APP_TRANSLATIONS={
+ 'منصة الخادم — سجّل دخولك للوصول إلى حسابك':'Servant platform — Sign in to access your account',
+ 'تسجيل الدخول':'Log in','إنشاء حساب':'Create account','البريد الإلكتروني':'Email','كلمة المرور':'Password','نوع الحساب':'Account type','خادم':'Servant','مخدوم':'Member','دخول':'Login','الاسم':'Name','أنا':'I am','المرحلة العمرية':'Age group','ابتدائي':'Primary','إعدادي':'Preparatory','ثانوي':'Secondary','شباب':'Youth','إنشاء الحساب':'Create account',
+ 'الرئيسية':'Dashboard','مستر التحضير':'Lesson Planner','الكتاب المقدس':'Bible','حياتي الروحية':'Spiritual Life','شبكة الخدام':'Community','المخدومين':'Members','الحضور والـQR':'Attendance & QR','حسابي':'Profile',
+ 'صباح الخير يا خادم 👋':'Good morning 👋','خلّي كلمتك جاهزة… وخلّي قلبك جاهز أكتر.':'Keep your message ready — and your heart even more ready.','تحضيراتك':'Your Lessons','آيات محفوظة':'Memorized Verses','مخدومين':'Members','كمّل من حيث توقفت':'Continue where you left off','كل التحضيرات':'All lessons','جاري تحميل تحضيراتك...':'Loading your lessons...','آية اليوم':'Verse of the Day','أضف تأمل ✦':'Add reflection ✦','رحلتك الروحية هذا الأسبوع':'Your spiritual journey this week','متابعة التقدم':'Track progress','+ نشاط روحي':'+ Spiritual Activity','تذكير للخدمة':'Service Reminder','جاري حساب المتابعة...':'Calculating follow-up...','متابعة المخدومين':'Member Follow-up',
+ 'حضّر أسرع، شارك، وابحث في تحضيرات الخدام.':'Prepare faster, share, and discover lessons from servants.','+ تحضير جديد':'+ New Lesson','بحث':'Search','كل الأعمار':'All ages','اقتراحات موثوقة':'Trusted Suggestions','حفظ':'Save','أدوات جذب المخدوم':'Engagement Tools','أسئلة افتتاحية':'Opening Questions','أفكار نشاط':'Activity Ideas',
+ 'الكتاب المقدس كاملًا بالعربية والإنجليزية — فان دايك وKing James Version.':'The complete Bible in Arabic and English — Van Dyke and King James Version.','اللغة / الترجمة':'Language / Translation','العربية — فان دايك':'Arabic — Van Dyke','السفر':'Book','الإصحاح':'Chapter','جاري تحميل الكتاب المقدس...':'Loading Bible...','سجّل خطواتك الروحية اليومية وتابع استمراريتك.':'Record your daily spiritual steps and track your consistency.','Streak الحالي':'Current Streak','هذا الشهر':'This Month','صلوات مسجلة':'Prayers Logged','تأملات':'Reflections','دفتر اليوم':'Today’s Notebook','كل علامة = نشاط حقيقي':'Every check = a real activity','التقدم الأسبوعي':'Weekly Progress','الـStreak يتحسب عند وجود نشاط روحي واحد على الأقل في اليوم، وليس بمجرد فتح الموقع.':'Your streak counts when you complete at least one spiritual activity in a day, not just by opening the site.',
+ 'شارك، شجّع، وصلّي مع مجتمع مِرْسَال.':'Share, encourage, and pray with the MERSAL community.','+ منشور جديد':'+ New Post','منشور جديد':'New Post','نشر':'Post','إلغاء':'Cancel','اعرف احتياجاتهم وتابع كل واحد بشكل شخصي.':'Know their needs and follow up personally.','+ مخدوم جديد':'+ New Member','الخادم يمسح QR الخاص بالمخدوم لتسجيل حضوره.':'The servant scans the member’s QR to record attendance.','Scanner':'Scanner','اضغط بدء المسح ثم وجّه الكاميرا إلى QR المخدوم.':'Tap Start Scan and point the camera at the member’s QR.','📷 بدء المسح':'📷 Start Scan','إيقاف':'Stop','حضور اليوم':'Today’s Attendance','جاري التحميل...':'Loading...','بياناتك الشخصية وكود الـQR الخاص بك.':'Your personal information and QR code.','تعديل البيانات':'Edit Profile','تسجيل الخروج':'Log out','نوع الحساب':'Account Type','الكنيسة':'Church','الخدمة':'Service','💡 ملاحظة مهمة':'💡 Important Note','معرّف المستخدم':'User ID','تحميل QR':'Download QR','نسخ المعرّف':'Copy ID','تحديث QR':'Refresh QR',
+ 'Settings ⚙️':'Settings ⚙️','Choose the language used across MERSAL.':'Choose the language used across MERSAL.','خادم':'Leader','مخدوم':'Scout','قائد':'Leader','كشاف':'Scout','Calendar':'التقويم','التقويم':'Calendar','+ Add Event':'+ إضافة حدث','Add Calendar Event':'إضافة حدث في التقويم','Upcoming Events':'الأحداث القادمة','No upcoming events.':'لا توجد أحداث قادمة.','Only leaders can add calendar events':'القادة فقط يمكنهم إضافة أحداث للتقويم','Delete this event?':'حذف هذا الحدث؟','Event added ✨':'تمت إضافة الحدث ✨','Event deleted':'تم حذف الحدث','Save Event':'حفظ الحدث','Cancel':'إلغاء','Title':'العنوان','Date':'التاريخ','Time':'الوقت','Description':'الوصف','Scout Club':'نادي كشفي','Leader':'قائد','Scout':'كشاف'
+};
+const APP_ARABIC=Object.fromEntries(
+  Object.entries(APP_TRANSLATIONS).map(([ar,en])=>[en,ar])
+);
+
+function replaceTextNodes(root, dict){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n=>{
+    const raw=n.nodeValue;
+    const trimmed=raw.trim();
+    if(!trimmed) return;
+    if(dict[trimmed]) n.nodeValue=raw.replace(trimmed,dict[trimmed]);
+  });
+}
+
+function setAppLanguage(lang){
+  lang = lang==='ar' ? 'ar' : 'en';
+  localStorage.setItem(APP_LANG_KEY,lang);
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  document.body.classList.toggle('app-ar',lang==='ar');
+
+  // Translate in both directions. Bible content is deliberately excluded.
+  replaceTextNodes(document.body, lang==='en' ? APP_TRANSLATIONS : APP_ARABIC);
+
+  document.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(el=>{
+    const p=el.getAttribute('placeholder');
+    const mapped=(lang==='en'?APP_TRANSLATIONS:APP_ARABIC)[p];
+    if(mapped) el.setAttribute('placeholder',mapped);
+  });
+
+  document.querySelectorAll('option').forEach(el=>{
+    const raw=el.textContent.trim();
+    const mapped=(lang==='en'?APP_TRANSLATIONS:APP_ARABIC)[raw];
+    if(mapped) el.textContent=mapped;
+  });
+
+  const a=document.getElementById('langArabicBtn'),e=document.getElementById('langEnglishBtn');
+  if(a&&e){
+    a.classList.toggle('gold',lang==='ar');
+    a.classList.toggle('secondary',lang!=='ar');
+    e.classList.toggle('gold',lang==='en');
+    e.classList.toggle('secondary',lang!=='en');
+  }
+}
+
+function initAppLanguage(){
+  const saved=localStorage.getItem(APP_LANG_KEY)||'en';
+  setAppLanguage(saved);
+}
+
+// Start authentication after the DOM exists. The previous build defined initAuth()
+// but never called it, which left the login screen hidden.
+window.addEventListener('DOMContentLoaded', ()=>{
+  initAppLanguage();
+  initAuth();
+});
+</script>
+
+<!-- Scanner Section (Servant Only) -->
+<div id="scanner-section" style="display:none; margin-top:20px;">
+  <button onclick="startScanner()">📷 فتح السكانر</button>
+  <div id="reader" style="width:300px;height:300px;margin-top:10px;"></div>
+</div>
+
+<script>
+function startScanner(){
+  document.getElementById("reader").style.display="block";
+  const qr=new Html5Qrcode("reader");
+  qr.start({facingMode:"environment"},{fps:10},
+    (text)=>{
+      alert("تم تسجيل الحضور: "+text);
+      qr.stop();
+    });
+}
+
+// role check (servant only)
+setTimeout(()=>{
+  try{
+    const role = localStorage.getItem("role");
+    if(role==="servant" || role==="leader"){
+      document.getElementById("scanner-section").style.display="block";
+    }
+  }catch(e){}
+},1000);
+</script>
+
+</body>
+</html>
